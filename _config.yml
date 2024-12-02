@@ -1,9 +1,10 @@
 # Site settings
-title:
-email:
-description: > # this means to ignore newlines until "baseurl:"
+title: Mylium
+email: info@mylium.eu
+description: >  # this means to ignore newlines until "baseurl:"
+ FPGA solutions
 baseurl: "" # the subpath of your site, e.g. /blog/
-url: "" # the base hostname & protocol for your site
+url: "https://www.mylium.eu" # the base hostname & protocol for your site
 
 twitter_username:
 github_username:

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Corsair Register Map Generator | mylium.eu</title>
+    <title>Register Map Generator | mylium.eu</title>
     
     <!-- Material Design CSS -->
     <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
@@ -21,8 +21,10 @@
     <header class="mdc-top-app-bar">
         <div class="mdc-top-app-bar__row">
             <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-                <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" onclick="window.location.href='https://www.mylium.eu'">arrow_back</button>
-                <span class="mdc-top-app-bar__title">Corsair Register Map Generator</span>
+                <a href="https://www.mylium.eu" style="display:flex;align-items:center;text-decoration:none;color:inherit;">
+                    <img src="../../img/portfolio/mylium_logo.png" alt="Mylium Logo" style="height:40px;vertical-align:middle;margin-right:12px;">
+                    <span class="mdc-top-app-bar__title">MYLIUM</span>
+                </a>
             </section>
             <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
                 <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" id="theme-toggle">brightness_4</button>
@@ -36,7 +38,7 @@
             <!-- Hero Section -->
             <div class="mdc-card hero-card">
                 <div class="mdc-card__content">
-                    <h1 class="mdc-typography--headline4">📋 Corsair Register Map Generator</h1>
+                    <h1 class="mdc-typography--headline4">📋 Register Map Generator</h1>
                     <p class="mdc-typography--body1">Generate VHDL modules, C headers, and documentation from register maps. All processing happens in your browser - no data is sent to any server.</p>
                 </div>
             </div>
@@ -59,33 +61,7 @@
             </div>
 
             <div id="main-content" style="display: none;">
-                <!-- Input Method Selection -->
-                <div class="mdc-card">
-                    <div class="mdc-card__content">
-                        <h2 class="mdc-typography--headline6">Input Method</h2>
-                        <div class="input-method-toggle">
-                            <div class="mdc-form-field">
-                                <div class="mdc-radio">
-                                    <input class="mdc-radio__native-control" type="radio" id="radio-upload" name="input-method" value="upload" checked>
-                                    <div class="mdc-radio__background">
-                                        <div class="mdc-radio__outer-circle"></div>
-                                        <div class="mdc-radio__inner-circle"></div>
-                                    </div>
-                                </div>
-                                <label for="radio-upload">Upload JSON File</label>
-                            </div>
-                            <div class="mdc-form-field">
-                                <div class="mdc-radio">
-                                    <input class="mdc-radio__native-control" type="radio" id="radio-gui" name="input-method" value="gui">
-                                    <div class="mdc-radio__background">
-                                        <div class="mdc-radio__outer-circle"></div>
-                                        <div class="mdc-radio__inner-circle"></div>
-                                    </div>
-                                </div>
-                                <label for="radio-gui">Build with GUI Editor</label>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Input Method Tab removed as requested; logic remains in JS for future use -->
                 </div>
 
                 <!-- JSON Upload Section -->
@@ -96,12 +72,7 @@
                             <span class="material-icons upload-icon">cloud_upload</span>
                             <p class="mdc-typography--body1">Drop regs.json here or click to browse</p>
                             <input type="file" id="file-input" accept=".json" hidden>
-                            <!-- CSRCONFIG upload: allow user to provide a csrconfig file (no processing in browser) -->
-                            <div style="margin-top: 12px;">
-                                <label class="mdc-typography--body2" for="csrfile-input"><strong>Optional:</strong> Upload csrconfig file</label>
-                                <input type="file" id="csrfile-input" accept="*/*" style="display: inline-block; margin-left: 8px;" />
-                                <span id="csrfile-name" class="mdc-typography--body2" style="margin-left:8px;"></span>
-                            </div>
+                            <!-- Removed csrconfig upload UI -->
                             <button class="mdc-button mdc-button--raised" id="browse-button">
                                 <span class="mdc-button__ripple"></span>
                                 <span class="mdc-button__label">Browse Files</span>
@@ -179,61 +150,91 @@
                 </div>
 
                 <!-- Output Configuration -->
-                <div class="mdc-card">
-                    <div class="mdc-card__content">
-                        <h2 class="mdc-typography--headline6">Output Configuration</h2>
-                        <div class="checkbox-group">
-                            <div class="mdc-form-field">
-                                <div class="mdc-checkbox">
-                                    <input type="checkbox" class="mdc-checkbox__native-control" id="output-vhdl" checked>
-                                    <div class="mdc-checkbox__background">
-                                        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
-                                            <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
-                                        </svg>
-                                        <div class="mdc-checkbox__mixedmark"></div>
+                    <!-- Input Configuration -->
+                    <div class="mdc-card">
+                        <div class="mdc-card__content">
+                            <h2 class="mdc-typography--headline6">Input Configuration</h2>
+                            <div class="config-row">
+                                <div class="mdc-text-field mdc-text-field--outlined">
+                                    <input type="text" id="input-base-address" class="mdc-text-field__input" value="0x00000000">
+                                    <div class="mdc-notched-outline">
+                                        <div class="mdc-notched-outline__leading"></div>
+                                        <div class="mdc-notched-outline__notch">
+                                            <label for="input-base-address" class="mdc-floating-label">Base Address</label>
+                                        </div>
+                                        <div class="mdc-notched-outline__trailing"></div>
                                     </div>
                                 </div>
-                                <label for="output-vhdl">VHDL Module</label>
-                            </div>
-                            <div class="mdc-form-field">
-                                <div class="mdc-checkbox">
-                                    <input type="checkbox" class="mdc-checkbox__native-control" id="output-c" checked>
-                                    <div class="mdc-checkbox__background">
-                                        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
-                                            <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
-                                        </svg>
-                                        <div class="mdc-checkbox__mixedmark"></div>
+                                <div class="mdc-text-field mdc-text-field--outlined">
+                                    <input type="text" id="input-read-filler" class="mdc-text-field__input" value="0xdeadbeef">
+                                    <div class="mdc-notched-outline">
+                                        <div class="mdc-notched-outline__leading"></div>
+                                        <div class="mdc-notched-outline__notch">
+                                            <label for="input-read-filler" class="mdc-floating-label">Read Filler</label>
+                                        </div>
+                                        <div class="mdc-notched-outline__trailing"></div>
                                     </div>
                                 </div>
-                                <label for="output-c">C Header</label>
-                            </div>
-                            <div class="mdc-form-field">
-                                <div class="mdc-checkbox">
-                                    <input type="checkbox" class="mdc-checkbox__native-control" id="output-docs" checked>
-                                    <div class="mdc-checkbox__background">
-                                        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
-                                            <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
-                                        </svg>
-                                        <div class="mdc-checkbox__mixedmark"></div>
-                                    </div>
-                                </div>
-                                <label for="output-docs">Documentation</label>
-                            </div>
-                            <div class="mdc-form-field">
-                                <div class="mdc-checkbox">
-                                    <input type="checkbox" class="mdc-checkbox__native-control" id="output-axil" checked>
-                                    <div class="mdc-checkbox__background">
-                                        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
-                                            <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
-                                        </svg>
-                                        <div class="mdc-checkbox__mixedmark"></div>
-                                    </div>
-                                </div>
-                                <label for="output-axil">AXI-Lite Interface</label>
                             </div>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Output Configuration -->
+                    <div class="mdc-card">
+                        <div class="mdc-card__content">
+                            <h2 class="mdc-typography--headline6">Output Configuration</h2>
+                            <div class="checkbox-group">
+                                <div class="mdc-form-field">
+                                    <div class="mdc-checkbox">
+                                        <input type="checkbox" class="mdc-checkbox__native-control" id="output-vhdl" checked>
+                                        <div class="mdc-checkbox__background">
+                                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                                <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                            </svg>
+                                            <div class="mdc-checkbox__mixedmark"></div>
+                                        </div>
+                                    </div>
+                                    <label for="output-vhdl">VHDL Module</label>
+                                </div>
+                                <div class="mdc-form-field">
+                                    <div class="mdc-checkbox">
+                                        <input type="checkbox" class="mdc-checkbox__native-control" id="output-c" checked>
+                                        <div class="mdc-checkbox__background">
+                                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                                <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                            </svg>
+                                            <div class="mdc-checkbox__mixedmark"></div>
+                                        </div>
+                                    </div>
+                                    <label for="output-c">C Header</label>
+                                </div>
+                                <div class="mdc-form-field">
+                                    <div class="mdc-checkbox">
+                                        <input type="checkbox" class="mdc-checkbox__native-control" id="output-docs" checked>
+                                        <div class="mdc-checkbox__background">
+                                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                                <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                            </svg>
+                                            <div class="mdc-checkbox__mixedmark"></div>
+                                        </div>
+                                    </div>
+                                    <label for="output-docs">Documentation</label>
+                                </div>
+                                <div class="mdc-form-field">
+                                    <div class="mdc-checkbox">
+                                        <input type="checkbox" class="mdc-checkbox__native-control" id="output-axil" checked>
+                                        <div class="mdc-checkbox__background">
+                                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                                <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                            </svg>
+                                            <div class="mdc-checkbox__mixedmark"></div>
+                                        </div>
+                                    </div>
+                                    <label for="output-axil">AXI-Lite Interface</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                 <!-- Generate Button -->
                 <div class="generate-section">

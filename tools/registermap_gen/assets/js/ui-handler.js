@@ -5,8 +5,7 @@ class UIHandler {
     this.currentInputMethod = 'upload';
     // store uploaded regs.json file (no processing on client)
     this.uploadedRegsFile = null;
-    // optional csrconfig file (no processing on client)
-    this.uploadedCsrconfigFile = null;
+    // Removed csrconfig file logic
         this.registers = [];
         this.initializeComponents();
         this.attachEventListeners();
@@ -49,39 +48,7 @@ class UIHandler {
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const browseButton = document.getElementById('browse-button');
-    const csrFileInput = document.getElementById('csrfile-input');
-
-        // Defensive: elements may not exist in some contexts
-        if (browseButton && fileInput) {
-            browseButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                fileInput.click();
-            });
-            fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
-        }
-
-        if (csrFileInput) {
-            csrFileInput.addEventListener('change', (e) => {
-                const f = e.target.files && e.target.files[0];
-                if (f) {
-                    // Store the File object; we will pass its raw content to Python without any processing
-                    this.uploadedCsrconfigFile = f;
-                    const csrNameEl = document.getElementById('csrfile-name');
-                    if (csrNameEl) csrNameEl.textContent = f.name;
-                    showSnackbar('CSR config file selected: ' + f.name);
-                } else {
-                    this.uploadedCsrconfigFile = null;
-                    const csrNameEl = document.getElementById('csrfile-name');
-                    if (csrNameEl) csrNameEl.textContent = '';
-                }
-            });
-            // Prevent the drop zone click handler from re-triggering the file dialog
-            csrFileInput.addEventListener('click', (e) => e.stopPropagation());
-            const csrLabel = document.querySelector('label[for="csrfile-input"]');
-            if (csrLabel) {
-                csrLabel.addEventListener('click', (e) => e.stopPropagation());
-            }
-        }
+        // Removed csrconfig event listeners and logic
 
         if (dropZone) {
             // Allow clicking the drop-area to open file browser as well
@@ -336,7 +303,8 @@ class UIHandler {
     buildConfigFromGUI() {
         const config = {
             name: document.getElementById('regmap-name').value,
-            base_address: parseInt(document.getElementById('base-address').value, 16),
+            base_address: parseInt(document.getElementById('input-base-address').value, 16),
+            read_filler: parseInt(document.getElementById('input-read-filler').value, 16),
             data_width: 32,
             address_width: 32,
             registers: []
@@ -410,19 +378,8 @@ class UIHandler {
             console.debug('[UI] Generation options:', options);
 
             // If a csrconfig file was uploaded, read it as text and pass it through unchanged to Python
-            let csrconfigContent = null;
-            let csrconfigFilename = null;
-            if (this.uploadedCsrconfigFile) {
-                csrconfigFilename = this.uploadedCsrconfigFile.name || 'csrconfig';
-                csrconfigContent = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target.result);
-                    reader.onerror = (err) => reject(err);
-                    reader.readAsText(this.uploadedCsrconfigFile);
-                });
-            }
-
-            const result = await runCorsairGeneration(regsJsonContent, options, csrconfigContent, csrconfigFilename, regsFilename);
+            // No csrconfig; only pass regsJsonContent and options
+            const result = await runCorsairGeneration(regsJsonContent, options, null, null, regsFilename);
             console.debug('[UI] Generation result:', result);
 
             if (result && result.success) {

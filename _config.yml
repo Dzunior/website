@@ -11,3 +11,13 @@ github_username:
 
 # Build settings
 markdown: kramdown
+
+# Include tools directory
+include:
+  - tools
+
+# Exclude node_modules and other unnecessary files
+exclude:
+  - node_modules
+  - vendor
+  - .git

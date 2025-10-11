@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corsair Register Map Generator | mylium.eu</title>
+    
+    <!-- Material Design CSS -->
+    <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <!-- Top App Bar -->
+    <header class="mdc-top-app-bar">
+        <div class="mdc-top-app-bar__row">
+            <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+                <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" onclick="window.location.href='https://www.mylium.eu'">arrow_back</button>
+                <span class="mdc-top-app-bar__title">Corsair Register Map Generator</span>
+            </section>
+            <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
+                <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" id="theme-toggle">brightness_4</button>
+                <a href="https://github.com/Dzunior/corsair_mod" target="_blank" class="material-icons mdc-top-app-bar__action-item mdc-icon-button">code</a>
+            </section>
+        </div>
+    </header>
+
+    <main class="mdc-top-app-bar--fixed-adjust">
+        <div class="container">
+            <!-- Hero Section -->
+            <div class="mdc-card hero-card">
+                <div class="mdc-card__content">
+                    <h1 class="mdc-typography--headline4">📋 Corsair Register Map Generator</h1>
+                    <p class="mdc-typography--body1">Generate VHDL modules, C headers, and documentation from register maps. All processing happens in your browser - no data is sent to any server.</p>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading-pyodide" class="loading-container">
+                <div class="mdc-linear-progress mdc-linear-progress--indeterminate">
+                    <div class="mdc-linear-progress__buffer">
+                        <div class="mdc-linear-progress__buffer-bar"></div>
+                        <div class="mdc-linear-progress__buffer-dots"></div>
+                    </div>
+                    <div class="mdc-linear-progress__bar mdc-linear-progress__primary-bar">
+                        <span class="mdc-linear-progress__bar-inner"></span>
+                    </div>
+                    <div class="mdc-linear-progress__bar mdc-linear-progress__secondary-bar">
+                        <span class="mdc-linear-progress__bar-inner"></span>
+                    </div>
+                </div>
+                <p class="mdc-typography--body2">Loading Python environment... This may take a moment on first visit.</p>
+            </div>
+
+            <div id="main-content" style="display: none;">
+                <!-- Input Method Selection -->
+                <div class="mdc-card">
+                    <div class="mdc-card__content">
+                        <h2 class="mdc-typography--headline6">Input Method</h2>
+                        <div class="input-method-toggle">
+                            <div class="mdc-form-field">
+                                <div class="mdc-radio">
+                                    <input class="mdc-radio__native-control" type="radio" id="radio-upload" name="input-method" value="upload" checked>
+                                    <div class="mdc-radio__background">
+                                        <div class="mdc-radio__outer-circle"></div>
+                                        <div class="mdc-radio__inner-circle"></div>
+                                    </div>
+                                </div>
+                                <label for="radio-upload">Upload JSON File</label>
+                            </div>
+                            <div class="mdc-form-field">
+                                <div class="mdc-radio">
+                                    <input class="mdc-radio__native-control" type="radio" id="radio-gui" name="input-method" value="gui">
+                                    <div class="mdc-radio__background">
+                                        <div class="mdc-radio__outer-circle"></div>
+                                        <div class="mdc-radio__inner-circle"></div>
+                                    </div>
+                                </div>
+                                <label for="radio-gui">Build with GUI Editor</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- JSON Upload Section -->
+                <div class="mdc-card" id="upload-section">
+                    <div class="mdc-card__content">
+                        <h2 class="mdc-typography--headline6">Upload Register Map JSON</h2>
+                        <div class="upload-area" id="drop-zone">
+                            <span class="material-icons upload-icon">cloud_upload</span>
+                            <p class="mdc-typography--body1">Drop regs.json here or click to browse</p>
+                            <input type="file" id="file-input" accept=".json" hidden>
+                            <!-- CSRCONFIG upload: allow user to provide a csrconfig file (no processing in browser) -->
+                            <div style="margin-top: 12px;">
+                                <label class="mdc-typography--body2" for="csrfile-input"><strong>Optional:</strong> Upload csrconfig file</label>
+                                <input type="file" id="csrfile-input" accept="*/*" style="display: inline-block; margin-left: 8px;" />
+                                <span id="csrfile-name" class="mdc-typography--body2" style="margin-left:8px;"></span>
+                            </div>
+                            <button class="mdc-button mdc-button--raised" id="browse-button">
+                                <span class="mdc-button__ripple"></span>
+                                <span class="mdc-button__label">Browse Files</span>
+                            </button>
+                        </div>
+                        <div id="file-info" style="display: none;">
+                            <p class="mdc-typography--body2"><strong>Loaded:</strong> <span id="file-name"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GUI Editor Section -->
+                <div class="mdc-card" id="gui-section" style="display: none;">
+                    <div class="mdc-card__content">
+                        <h2 class="mdc-typography--headline6">Register Map Configuration</h2>
+                        
+                        <!-- Global Settings -->
+                        <div class="config-row">
+                            <div class="mdc-text-field mdc-text-field--outlined">
+                                <input type="text" id="regmap-name" class="mdc-text-field__input" value="regmap">
+                                <div class="mdc-notched-outline">
+                                    <div class="mdc-notched-outline__leading"></div>
+                                    <div class="mdc-notched-outline__notch">
+                                        <label for="regmap-name" class="mdc-floating-label">Register Map Name</label>
+                                    </div>
+                                    <div class="mdc-notched-outline__trailing"></div>
+                                </div>
+                            </div>
+                            <div class="mdc-text-field mdc-text-field--outlined">
+                                <input type="text" id="base-address" class="mdc-text-field__input" value="0x0">
+                                <div class="mdc-notched-outline">
+                                    <div class="mdc-notched-outline__leading"></div>
+                                    <div class="mdc-notched-outline__notch">
+                                        <label for="base-address" class="mdc-floating-label">Base Address</label>
+                                    </div>
+                                    <div class="mdc-notched-outline__trailing"></div>
+                                </div>
+                            </div>
+                            <div class="mdc-select mdc-select--outlined">
+                                <div class="mdc-select__anchor">
+                                    <span class="mdc-notched-outline">
+                                        <span class="mdc-notched-outline__leading"></span>
+                                        <span class="mdc-notched-outline__notch">
+                                            <span class="mdc-floating-label">Data Width</span>
+                                        </span>
+                                        <span class="mdc-notched-outline__trailing"></span>
+                                    </span>
+                                    <span class="mdc-select__selected-text">32</span>
+                                    <span class="mdc-select__dropdown-icon">
+                                        <svg class="mdc-select__dropdown-icon-graphic" viewBox="7 10 10 5">
+                                            <polygon points="7 10 12 15 17 10"></polygon>
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="mdc-select__menu mdc-menu mdc-menu-surface">
+                                    <ul class="mdc-list">
+                                        <li class="mdc-list-item" data-value="8">8</li>
+                                        <li class="mdc-list-item" data-value="16">16</li>
+                                        <li class="mdc-list-item mdc-list-item--selected" data-value="32">32</li>
+                                        <li class="mdc-list-item" data-value="64">64</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Registers Container -->
+                        <div id="registers-container"></div>
+
+                        <button class="mdc-button mdc-button--outlined" id="add-register-btn">
+                            <span class="mdc-button__ripple"></span>
+                            <i class="material-icons mdc-button__icon">add</i>
+                            <span class="mdc-button__label">Add Register</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Output Configuration -->
+                <div class="mdc-card">
+                    <div class="mdc-card__content">
+                        <h2 class="mdc-typography--headline6">Output Configuration</h2>
+                        <div class="checkbox-group">
+                            <div class="mdc-form-field">
+                                <div class="mdc-checkbox">
+                                    <input type="checkbox" class="mdc-checkbox__native-control" id="output-vhdl" checked>
+                                    <div class="mdc-checkbox__background">
+                                        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                            <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                        </svg>
+                                        <div class="mdc-checkbox__mixedmark"></div>
+                                    </div>
+                                </div>
+                                <label for="output-vhdl">VHDL Module</label>
+                            </div>
+                            <div class="mdc-form-field">
+                                <div class="mdc-checkbox">
+                                    <input type="checkbox" class="mdc-checkbox__native-control" id="output-c" checked>
+                                    <div class="mdc-checkbox__background">
+                                        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                            <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                        </svg>
+                                        <div class="mdc-checkbox__mixedmark"></div>
+                                    </div>
+                                </div>
+                                <label for="output-c">C Header</label>
+                            </div>
+                            <div class="mdc-form-field">
+                                <div class="mdc-checkbox">
+                                    <input type="checkbox" class="mdc-checkbox__native-control" id="output-docs" checked>
+                                    <div class="mdc-checkbox__background">
+                                        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                            <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                        </svg>
+                                        <div class="mdc-checkbox__mixedmark"></div>
+                                    </div>
+                                </div>
+                                <label for="output-docs">Documentation</label>
+                            </div>
+                            <div class="mdc-form-field">
+                                <div class="mdc-checkbox">
+                                    <input type="checkbox" class="mdc-checkbox__native-control" id="output-axil" checked>
+                                    <div class="mdc-checkbox__background">
+                                        <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                            <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                        </svg>
+                                        <div class="mdc-checkbox__mixedmark"></div>
+                                    </div>
+                                </div>
+                                <label for="output-axil">AXI-Lite Interface</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <div class="generate-section">
+                    <button class="mdc-button mdc-button--raised mdc-button--leading" id="generate-btn" disabled>
+                        <span class="mdc-button__ripple"></span>
+                        <i class="material-icons mdc-button__icon">build</i>
+                        <span class="mdc-button__label">Generate Register Map</span>
+                    </button>
+                </div>
+
+                <!-- Output Section -->
+                <div class="mdc-card" id="output-section" style="display: none;">
+                    <div class="mdc-card__content">
+                        <h2 class="mdc-typography--headline6">Generated Files</h2>
+                        
+                        <div class="mdc-tab-bar" role="tablist">
+                            <div class="mdc-tab-scroller">
+                                <div class="mdc-tab-scroller__scroll-area">
+                                    <div class="mdc-tab-scroller__scroll-content">
+                                        <button class="mdc-tab mdc-tab--active" role="tab" data-tab="vhdl">
+                                            <span class="mdc-tab__content">
+                                                <span class="mdc-tab__text-label">VHDL Module</span>
+                                            </span>
+                                            <span class="mdc-tab-indicator mdc-tab-indicator--active">
+                                                <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
+                                            </span>
+                                            <span class="mdc-tab__ripple"></span>
+                                        </button>
+                                        <button class="mdc-tab" role="tab" data-tab="c">
+                                            <span class="mdc-tab__content">
+                                                <span class="mdc-tab__text-label">C Header</span>
+                                            </span>
+                                            <span class="mdc-tab-indicator">
+                                                <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
+                                            </span>
+                                            <span class="mdc-tab__ripple"></span>
+                                        </button>
+                                        <button class="mdc-tab" role="tab" data-tab="docs">
+                                            <span class="mdc-tab__content">
+                                                <span class="mdc-tab__text-label">Documentation</span>
+                                            </span>
+                                            <span class="mdc-tab-indicator">
+                                                <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
+                                            </span>
+                                            <span class="mdc-tab__ripple"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content">
+                            <div id="tab-vhdl" class="tab-panel active">
+                                <pre><code class="language-vhdl" id="output-vhdl-code"></code></pre>
+                                <button class="mdc-button mdc-button--outlined" onclick="downloadFile('vhdl')">
+                                    <span class="mdc-button__ripple"></span>
+                                    <i class="material-icons mdc-button__icon">download</i>
+                                    <span class="mdc-button__label">Download VHDL</span>
+                                </button>
+                            </div>
+                            <div id="tab-c" class="tab-panel">
+                                <pre><code class="language-c" id="output-c-code"></code></pre>
+                                <button class="mdc-button mdc-button--outlined" onclick="downloadFile('c')">
+                                    <span class="mdc-button__ripple"></span>
+                                    <i class="material-icons mdc-button__icon">download</i>
+                                    <span class="mdc-button__label">Download C Header</span>
+                                </button>
+                            </div>
+                            <div id="tab-docs" class="tab-panel">
+                                <pre><code class="language-markdown" id="output-docs-code"></code></pre>
+                                <button class="mdc-button mdc-button--outlined" onclick="downloadFile('docs')">
+                                    <span class="mdc-button__ripple"></span>
+                                    <i class="material-icons mdc-button__icon">download</i>
+                                    <span class="mdc-button__label">Download Documentation</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button class="mdc-button mdc-button--raised" id="download-all-btn">
+                            <span class="mdc-button__ripple"></span>
+                            <i class="material-icons mdc-button__icon">folder_zip</i>
+                            <span class="mdc-button__label">Download All Files</span>
+                        </button>
+                        <div style="margin-top:16px">
+                            <h3 class="mdc-typography--subtitle1">Additional generated files</h3>
+                            <ul id="generated-files-list" style="list-style: none; padding-left: 0;">
+                                <li>No additional files generated</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Snackbar for notifications -->
+    <div class="mdc-snackbar">
+        <div class="mdc-snackbar__surface">
+            <div class="mdc-snackbar__label"></div>
+            <div class="mdc-snackbar__actions">
+                <button type="button" class="mdc-icon-button mdc-snackbar__dismiss material-icons">close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-vhdl.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.28.3/full/pyodide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <script src="assets/js/pyodide-loader.js"></script>
+    <script src="assets/js/ui-handler.js"></script>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>
+

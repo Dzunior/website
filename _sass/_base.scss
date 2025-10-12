@@ -1,7 +1,19 @@
 // Brighter text for main header paragraph
 .text-bright {
     color: #fff;
-    text-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    text-shadow: 0 4px 24px rgba(0,0,0,0.18), 0 1px 0 #e8eef5;
+    background: linear-gradient(90deg, #f8f9fa 0%, #e8eef5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+}
+
+.modern-font {
+    font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 1.25em;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 html,
 body {

@@ -34,8 +34,14 @@
 // }
 
 // variables.less
-$theme-primary: #0a18b0;
-$theme-dark: #222;
+// Modern stealth startup defense sector color palette
+$theme-primary: #00d4ff; // Cyan accent for tech/defense feel
+$theme-secondary: #0091ff; // Blue accent
+$theme-dark: #0a0e1a; // Very dark blue-black background
+$theme-darker: #050810; // Even darker for sections
+$theme-gray: #1a2332; // Dark gray-blue for cards/sections
+$theme-text: #e8eef5; // Soft white for main text
+$theme-text-muted: #8b98ab; // Muted blue-gray for secondary text
 
 // Import partials from `sass_dir` (defaults to `_sass`)
 @import

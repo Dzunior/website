@@ -6,6 +6,10 @@ body {
 
 body {
     @include serif-font;
+    background-color: $theme-darker;
+    color: $theme-text;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 hr {
@@ -15,7 +19,11 @@ hr {
 }
 
 hr.light {
-    border-color: white;
+    border-color: $theme-text;
+}
+
+hr.primary {
+    border-color: $theme-primary;
 }
 
 a {
@@ -40,6 +48,7 @@ p {
     font-size: 16px;
     line-height: 1.5;
     margin-bottom: 20px;
+    color: $theme-text;
 }
 
 .bg-primary {
@@ -48,11 +57,16 @@ p {
 
 .bg-dark {
     background-color: $theme-dark;
-    color: white;
+    color: $theme-text;
+}
+
+.bg-darker {
+    background-color: $theme-darker;
+    color: $theme-text;
 }
 
 .text-faded {
-    color: rgba(white, .7);
+    color: $theme-text-muted;
 }
 
 section {
@@ -70,18 +84,22 @@ aside {
 // Navigation
 
 .navbar-default {
-    background-color: white;
-    border-color: rgba($theme-dark, .5);
+    background-color: rgba($theme-darker, 0.95);
+    border-color: rgba($theme-primary, .2);
     @include sans-serif-font;
     @include transition-all;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 20px rgba(0, 212, 255, 0.1);
+    
     .navbar-header .navbar-brand {
-        color: $theme-primary;
+        color: $theme-text;
         @include sans-serif-font;
         font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 2px;
         &:hover,
         &:focus {
-            color: darken($theme-primary, 10%);
+            color: $theme-primary;
         }
     }
     .nav {
@@ -89,9 +107,10 @@ aside {
             > a,
             > a:focus {
                 text-transform: uppercase;
-                font-weight: 700;
+                font-weight: 600;
                 font-size: 13px;
-                color: $theme-dark;
+                color: $theme-text-muted;
+                letter-spacing: 1px;
                 &:hover {
                     color: $theme-primary;
                 }
@@ -109,36 +128,37 @@ aside {
         }
     }
     @media (min-width: 768px) {
-        background-color: transparent;
-        border-color: rgba(white, .3);
+        background-color: rgba($theme-darker, 0.7);
+        border-color: rgba($theme-primary, .1);
         .navbar-header .navbar-brand {
-            color: rgba(white, .7);
+            color: $theme-text;
             &:hover,
             &:focus {
-                color: white;
+                color: $theme-primary;
             }
         }
         .nav > li > a,
         .nav > li > a:focus {
-            color: rgba(white, .7);
+            color: $theme-text-muted;
             &:hover {
-                color: white;
+                color: $theme-primary;
             }
         }
         &.affix {
-            background-color: white;
-            border-color: rgba($theme-dark, .5);
+            background-color: rgba($theme-darker, 0.98);
+            border-color: rgba($theme-primary, .2);
+            box-shadow: 0 2px 30px rgba(0, 212, 255, 0.15);
             .navbar-header .navbar-brand {
-                color: $theme-primary;
+                color: $theme-text;
                 font-size: 14px;
                 &:hover,
                 &:focus {
-                    color: darken($theme-primary, 10%);
+                    color: $theme-primary;
                 }
             }
             .nav > li > a,
             .nav > li > a:focus {
-                color: $theme-dark;
+                color: $theme-text-muted;
                 &:hover {
                     color: $theme-primary;
                 }
@@ -155,9 +175,9 @@ header {
     min-height: auto;
     @include background-cover;
     background-position: center;
-    background-image: url('../img/header.jpg');
+    background-image: linear-gradient(135deg, rgba(10, 14, 26, 0.95) 0%, rgba(5, 8, 16, 0.98) 100%), url('../img/header.jpg');
     text-align: center;
-    color: white;
+    color: $theme-text;
     .header-content {
         position: relative;
         text-align: center;
@@ -169,15 +189,21 @@ header {
                 text-transform: uppercase;
                 margin-top: 0;
                 margin-bottom: 0;
+                color: $theme-text;
+                text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+                letter-spacing: 3px;
             }
             hr {
                 margin: 30px auto;
+                border-color: $theme-primary;
             }
             p {
-                font-weight: 700;
-                color: rgba(white, 1.0);
+                font-weight: 400;
+                color: $theme-text-muted;
                 font-size: 16px;
                 margin-bottom: 50px;
+                text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+                line-height: 1.8;
             }
         }
     }
@@ -209,16 +235,40 @@ header {
 
 .section-heading {
     margin-top: 0;
+    color: $theme-text;
 }
 
 .service-box {
     max-width: 400px;
     margin: 50px auto 0;
+    background: rgba($theme-gray, 0.5);
+    padding: 30px;
+    border-radius: 8px;
+    border: 1px solid rgba($theme-primary, 0.1);
+    transition: all 0.3s ease;
+    
+    &:hover {
+        background: rgba($theme-gray, 0.8);
+        border-color: rgba($theme-primary, 0.3);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 212, 255, 0.15);
+    }
+    
     @media (min-width: 992px) {
         margin: 20px auto 0;
     }
     p {
         margin-bottom: 0;
+        color: $theme-text-muted;
+    }
+    
+    h3 {
+        color: $theme-text;
+        margin-top: 20px;
+    }
+    
+    i {
+        color: $theme-primary;
     }
 }
 
@@ -296,19 +346,27 @@ header {
 
 // Button Styles
 .btn-default {
-    @include button-variant($theme-dark, white, white);
+    @include button-variant($theme-text, $theme-gray, $theme-primary);
 }
 
 .btn-primary {
-    @include button-variant(white, $theme-primary, $theme-primary);
+    @include button-variant($theme-dark, $theme-primary, $theme-primary);
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+    
+    &:hover {
+        box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+        transform: translateY(-2px);
+    }
 }
 
 .btn {
     @include sans-serif-font;
     border: none;
-    border-radius: 300px;
+    border-radius: 4px;
     font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
 }
 
 .btn-xl {
@@ -316,36 +374,48 @@ header {
 }
 
 // Contact
-#contact .fa {
-    color: $theme-dark;
-    font-size: 4em;
+#contact {
+    background-color: $theme-dark;
+    
+    .fa {
+        color: $theme-primary;
+        font-size: 4em;
+    }
+    
+    h2, p {
+        color: $theme-text;
+    }
+    
+    hr.primary {
+        border-color: $theme-primary;
+    }
 }
 
 // Extras
 // -- Highlight Color Customization
 ::-moz-selection {
-    color: white;
+    color: $theme-text;
     text-shadow: none;
-    background: $theme-dark;
+    background: $theme-primary;
 }
 
 ::selection {
-    color: white;
+    color: $theme-dark;
     text-shadow: none;
-    background: $theme-dark;
+    background: $theme-primary;
 }
 
 img::selection {
-    color: white;
+    color: $theme-text;
     background: transparent;
 }
 
 img::-moz-selection {
-    color: white;
+    color: $theme-text;
     background: transparent;
 }
 
 body {
-    -webkit-tap-highlight-color: $theme-dark;
+    -webkit-tap-highlight-color: $theme-primary;
 }
 

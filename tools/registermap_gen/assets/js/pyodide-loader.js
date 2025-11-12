@@ -561,13 +561,15 @@ def create_regmap_from_regs_file(path):
             raise
 
 
-def generate_outputs(regs_json_content, options, csrconfig_content=None, csrconfig_filename=None, regs_filename=None):
+def generate_outputs(regs_json_content, options, base_address_str='0x00000000', read_filler_str='0xdeadbeef'):
     """
-    Generate register map outputs using corsair csrconfig + regs.json
+    Generate register map outputs using corsair with csrconfig approach
 
     Args:
         regs_json_content: JSON string content of regs.json file
         options: Dict with output options (vhdl, c, docs, axil)
+        base_address_str: Base address as hex string
+        read_filler_str: Read filler value as hex string
 
     Returns:
         JSON string with generated file contents or error
@@ -587,51 +589,19 @@ def generate_outputs(regs_json_content, options, csrconfig_content=None, csrconf
                 options = {}
 
         print(f"[Python] Starting generation with options: {options}")
-
-        # If a csrconfig file was provided by the browser, write it into the Pyodide FS without processing
-        if csrconfig_content:
-            try:
-                fname = csrconfig_filename or 'csrconfig'
-                # Ensure filename is safe (basic sanitation)
-                fname = os.path.basename(fname)
-                csr_path = os.path.join('/tmp', fname)
-                with open(csr_path, 'w') as _cf:
-                    _cf.write(csrconfig_content)
-                print(f"[Python] Wrote csrconfig to {csr_path}")
-            except Exception as _werr:
-                print(f"[Python] Warning: could not write csrconfig: {_werr}", file=sys.stderr)
-
-        # If regs.json raw content and a filename were provided, write it to the Pyodide FS so Corsair can read it by path
-        regs_path = None
-        if (regs_filename is not None) and (regs_json_content is not None):
-            try:
-                rname = os.path.basename(regs_filename) or 'regs.json'
-                regs_path = os.path.join('/tmp', rname)
-                with open(regs_path, 'w') as _rf:
-                    _rf.write(regs_json_content)
-                print(f"[Python] Wrote regs.json to {regs_path}")
-            except Exception as _rerr:
-                print(f"[Python] Warning: could not write regs.json to FS: {_rerr}", file=sys.stderr)
-
-        # Create register map. If csrconfig is provided, avoid pre-loading regs.json and let Corsair read files by path.
-        # Otherwise, fall back to creating regmap from provided regs.json
-        if 'csr_path' in locals() and locals().get('csr_path'):
-            print('[Python] CSR config provided; creating empty RegisterMap and delegating file reading to corsair')
-            regmap = RegisterMap()
-        else:
-            # Prefer file-based loading (if available); otherwise parse the JSON content
-            if regs_path:
-                regmap = create_regmap_from_regs_file(regs_path)
-            else:
-                # Ensure we have valid JSON content before attempting to parse
-                if not regs_json_content or not regs_json_content.strip():
-                    print("[Python] Warning: Empty regs_json_content, creating empty RegisterMap")
-                    regmap = RegisterMap()
-                else:
-                    regmap = create_regmap_from_regs_json(regs_json_content)
+        
+        # Parse base_address and read_filler
+        try:
+            base_address = int(base_address_str, 16) if isinstance(base_address_str, str) else int(base_address_str)
+        except:
+            base_address = 0
+        try:
+            read_filler = int(read_filler_str, 16) if isinstance(read_filler_str, str) else int(read_filler_str)
+        except:
+            read_filler = 0
 
         # Prepare a dedicated output directory in the Pyodide FS so we can capture any files written
-        import tempfile, shutil, base64
+        import shutil, base64
         outdir = os.path.join('/tmp', 'corsair_out')
         # Clean existing outdir
         try:
@@ -641,361 +611,119 @@ def generate_outputs(regs_json_content, options, csrconfig_content=None, csrconf
             pass
         os.makedirs(outdir, exist_ok=True)
 
-        # Change current working directory to outdir so generators that write relative files place them there
+        # Write regs.json to the filesystem so corsair can read it
+        regs_path = os.path.join(outdir, 'regs.json')
+        with open(regs_path, 'w') as f:
+            f.write(regs_json_content)
+        print(f"[Python] Wrote regs.json to {regs_path}")
+
+        # Change current working directory to outdir
         old_cwd = os.getcwd()
         try:
-            # First, try using regmap.generate with csrconfig path if available (preferred: pass file paths to Corsair)
-            used_regmap_generate = False
-            try:
-                csr_path_local = locals().get('csr_path', None)
-            except Exception:
-                csr_path_local = None
-            if csr_path_local and hasattr(regmap, 'generate'):
-                import inspect
-                print(f"[Python] Attempting regmap.generate with csrconfig path: {csr_path_local}")
-                try:
-                    sig = None
-                    try:
-                        sig = inspect.signature(regmap.generate)
-                        print(f"[Python] regmap.generate signature: {sig}")
-                    except Exception as _sigerr:
-                        print(f"[Python] Could not inspect regmap.generate signature: {_sigerr}")
-                    # Try common calling patterns
-                    # Temporarily change directory to the csrconfig location in case relative includes are used
-                    csr_dir = os.path.dirname(csr_path_local) or '/tmp'
-                    _pre_cwd = os.getcwd()
-                    try:
-                        os.chdir(csr_dir)
-                    except Exception as _cd_e:
-                        print(f"[Python] Warning: could not chdir to csr_dir {csr_dir}: {_cd_e}")
-                    generate_attempts = [
-                        lambda: regmap.generate(csr_path_local, outdir),
-                        lambda: regmap.generate(csr_path_local),
-                        lambda: regmap.generate(config=csr_path_local, outdir=outdir),
-                        lambda: regmap.generate(config=csr_path_local),
-                        lambda: regmap.generate(outdir=outdir)
-                    ]
-                    for i, attempt in enumerate(generate_attempts):
-                        try:
-                            attempt()
-                            print(f"[Python] regmap.generate attempt {i+1} completed")
-                            used_regmap_generate = True
-                            break
-                        except TypeError as te:
-                            print(f"[Python] regmap.generate attempt {i+1} TypeError: {te}")
-                            continue
-                        except Exception as ge:
-                            print(f"[Python] regmap.generate attempt {i+1} error: {ge}")
-                            continue
-                    # After generation attempts, ensure we switch to outdir for reading results and any manual fallbacks
-                    try:
-                        os.chdir(outdir)
-                        print(f"[Python] Changed cwd to outdir: {outdir}")
-                    except Exception as _cd2_e:
-                        print(f"[Python] Warning: could not chdir to outdir {outdir}: {_cd2_e}")
-                    # If outdir is empty, attempt to copy expected outputs from csr_dir (some versions ignore outdir arg)
-                    try:
-                        import shutil as _shutil
-                        def _dir_not_empty(p):
-                            try:
-                                return any(os.scandir(p))
-                            except Exception:
-                                return False
-                        if used_regmap_generate and (not _dir_not_empty(outdir)):
-                            csr_dir = os.path.dirname(csr_path_local) or '/tmp'
-                            for sub in ['hw', 'sw', 'doc']:
-                                src = os.path.join(csr_dir, sub)
-                                dst = os.path.join(outdir, sub)
-                                if os.path.isdir(src):
-                                    try:
-                                        os.makedirs(dst, exist_ok=True)
-                                        # Copy all files from src to dst
-                                        for root, _, files in os.walk(src):
-                                            relroot = os.path.relpath(root, src)
-                                            for fn in files:
-                                                s = os.path.join(root, fn)
-                                                d = os.path.join(dst, relroot, fn)
-                                                os.makedirs(os.path.dirname(d), exist_ok=True)
-                                                _shutil.copyfile(s, d)
-                                        print(f"[Python] Copied outputs from {src} to {dst}")
-                                    except Exception as _cpy_e:
-                                        print(f"[Python] Warning: copy from {src} failed: {_cpy_e}")
-                    except Exception as _post_e:
-                        print(f"[Python] Post-generate copy step failed: {_post_e}")
-                except Exception as e_gen:
-                    print(f"[Python] regmap.generate invocation failed: {e_gen}")
-
-            # If regmap.generate wasn't used/successful, manually call generators
-            if not used_regmap_generate:
-                # Ensure we are in outdir so relative outputs land there
-                try:
-                    os.chdir(outdir)
-                except Exception:
-                    pass
-                print("[Python] Running manual generators...")
+            os.chdir(outdir)
+            print(f"[Python] Changed cwd to {outdir}")
             
-            # Import generators module and attempt to discover generator classes dynamically
-            import corsair.generators as genmod
-            print(f"[Python] Available generators: {dir(genmod)}")
-
-            def find_generator_class(keyword):
-                """Find a generator class in genmod whose name contains keyword (case-insensitive)
-                and which is a subclass of genmod.Generator if possible."""
-                candidates = []
-                for name in dir(genmod):
-                    if keyword.lower() in name.lower():
-                        obj = getattr(genmod, name)
-                        if isinstance(obj, type):
-                            candidates.append((name, obj))
-                # Prefer classes that subclass genmod.Generator
-                try:
-                    base = getattr(genmod, 'Generator', None)
-                except Exception:
-                    base = None
-                if base:
-                    for name, cls in candidates:
-                        try:
-                            if issubclass(cls, base):
-                                print(f"[Python] Selected generator class {name} for keyword '{keyword}' (subclass of Generator)")
-                                return cls
-                        except Exception:
-                            continue
-                if candidates:
-                    print(f"[Python] Selected generator class {candidates[0][0]} for keyword '{keyword}' (fallback)")
-                    return candidates[0][1]
-                return None
-
-            # Attempt to locate generators for VHDL, C, and Markdown using exact names first
-            VHDL_cls = None
-            for name in ['Vhdl', 'VHDL', 'VhdlGen']:
-                if hasattr(genmod, name):
-                    VHDL_cls = getattr(genmod, name)
-                    print(f"[Python] Found VHDL generator: {name}")
-                    break
-            if not VHDL_cls:
-                VHDL_cls = find_generator_class('vhdl')
+            # Read register map
+            rmap = RegisterMap()
+            rmap.read_file('regs.json')
+            print(f"[Python] Loaded register map with {len(rmap)} registers")
             
-            C_cls = None
-            for name in ['CHeader', 'C', 'CGen']:
-                if hasattr(genmod, name):
-                    C_cls = getattr(genmod, name)
-                    print(f"[Python] Found C generator: {name}")
-                    break
-            if not C_cls:
-                C_cls = find_generator_class('c')
+            # Set global configuration using corsair's config module
+            from corsair import config as corsair_config
+            globcfg = corsair_config.default_globcfg()
+            globcfg['base_address'] = base_address
+            globcfg['data_width'] = 32
+            globcfg['address_width'] = 16
+            globcfg['register_reset'] = 'sync_pos'
+            corsair_config.set_globcfg(globcfg)
+            print(f"[Python] Set global config: base_address={hex(base_address)}")
             
-            Markdown_cls = None
-            for name in ['Markdown', 'MarkdownGen', 'Md']:
-                if hasattr(genmod, name):
-                    Markdown_cls = getattr(genmod, name)
-                    print(f"[Python] Found Markdown generator: {name}")
-                    break
-            if not Markdown_cls:
-                Markdown_cls = find_generator_class('markdown') or find_generator_class('md') or find_generator_class('txt')
-
+            # Generate outputs based on options
+            from corsair import generators
             outputs = {}
-
-            def try_invoke_generator(cls, regmap, target_path):
-                """Try multiple ways to invoke a generator class and ensure it writes to target_path."""
-                if not cls:
-                    return False
+            
+            # VHDL module (AXI-Lite interface)
+            if options.get('vhdl', True):
                 try:
-                    print(f"[Python] Trying to invoke generator {cls.__name__} for path: {target_path}")
-
-                    # Prepare directories
-                    try:
-                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                    except Exception:
-                        pass
-
-                    inst = cls()
-                    methods = [m for m in dir(inst) if not m.startswith('_')]
-                    print(f"[Python] Generator {cls.__name__} methods: {methods}")
-
-                    # Ensure common attribute name used by generators
-                    try:
-                        setattr(inst, 'rmap', regmap)
-                    except Exception:
-                        pass
-                    try:
-                        setattr(inst, 'regmap', regmap)
-                    except Exception:
-                        pass
-
-                    # Prefer explicit render_to_file if available
-                    if hasattr(inst, 'render_to_file'):
-                        try:
-                            # Try signature (regmap, target)
-                            inst.render_to_file(regmap, target_path)
-                            print(f"[Python] {cls.__name__}.render_to_file(regmap, path) succeeded")
-                            return True
-                        except TypeError:
-                            try:
-                                # Try signature (target) with rmap set on instance
-                                inst.render_to_file(target_path)
-                                print(f"[Python] {cls.__name__}.render_to_file(path) succeeded with rmap on instance")
-                                return True
-                            except Exception as e:
-                                print(f"[Python] render_to_file attempts failed: {e}")
-
-                    # Fallback to render() and write ourselves
-                    if hasattr(inst, 'render'):
-                        try:
-                            try:
-                                content = inst.render(regmap)
-                            except TypeError:
-                                content = inst.render()
-                            if isinstance(content, (str, bytes)):
-                                mode = 'wb' if isinstance(content, bytes) else 'w'
-                                with open(target_path, mode) as outf:
-                                    outf.write(content)
-                                print(f"[Python] Wrote rendered content to {target_path}")
-                                return True
-                            else:
-                                print(f"[Python] render() returned non-text type: {type(content)}")
-                        except Exception as e:
-                            print(f"[Python] render attempts failed: {e}")
-
-                    # Try generic generate patterns as a last resort
-                    generate_attempts = [
-                        lambda: inst.generate(regmap, target_path),
-                        lambda: inst.generate(regmap),
-                        lambda: inst.generate(target_path),
-                        lambda: inst.generate(),
-                    ]
-                    for i, attempt in enumerate(generate_attempts):
-                        try:
-                            attempt()
-                            print(f"[Python] Generator {cls.__name__} generate() attempt {i+1} finished")
-                            # If the generator wrote to its own default location, attempt to copy to our target
-                            # Try known method 'make_target' or 'path'
-                            try:
-                                if hasattr(inst, 'make_target'):
-                                    produced = inst.make_target()
-                                    if produced and os.path.exists(produced):
-                                        try:
-                                            os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                                        except Exception:
-                                            pass
-                                        import shutil
-                                        shutil.copyfile(produced, target_path)
-                                        print(f"[Python] Copied generated file from {produced} to {target_path}")
-                                        return True
-                            except Exception as e_mt:
-                                print(f"[Python] make_target check failed: {e_mt}")
-                            # Otherwise, hope it rendered to our outdir and will be picked up
-                            return True
-                        except TypeError as te:
-                            print(f"[Python] generate attempt {i+1} failed with TypeError: {te}")
-                            continue
-                        except Exception as e:
-                            print(f"[Python] generate attempt {i+1} raised: {e}")
-                            continue
-
-                    print(f"[Python] All attempts failed for generator {cls.__name__}")
-                    return False
-                except Exception as e_inst:
-                    print(f"[Python] Could not instantiate generator {cls.__name__}: {e_inst}")
-                    return False
-
-            # Run generators based on requested options
-            if options.get('vhdl', True) and VHDL_cls:
-                try:
-                    ok = try_invoke_generator(VHDL_cls, regmap, 'hw/regs.vhd')
-                    if ok:
-                        print("[Python] VHDL generation attempt finished (success) ")
-                    else:
-                        print("[Python] VHDL generation attempt finished (no suitable invocation)")
+                    print("[Python] Generating VHDL module...")
+                    gen = generators.Vhdl(rmap, path='hw/regs.vhd', read_filler=read_filler, interface='axil')
+                    gen.generate()
+                    with open('hw/regs.vhd', 'r') as f:
+                        outputs['vhdl'] = f.read()
+                    print(f"[Python] ✓ VHDL module generated ({len(outputs['vhdl'])} chars)")
                 except Exception as e:
-                    print(f"[Python] VHDL generation failed: {e}", file=sys.stderr)
-
-            if options.get('c', True) and C_cls:
+                    print(f"[Python] VHDL generation error: {e}")
+                    traceback.print_exc()
+                    outputs['vhdl'] = f"Error generating VHDL: {e}"
+            
+            # C header
+            if options.get('c', True):
                 try:
-                    ok = try_invoke_generator(C_cls, regmap, 'sw/regs.h')
-                    if ok:
-                        print("[Python] C generation attempt finished (success)")
-                    else:
-                        print("[Python] C generation attempt finished (no suitable invocation)")
+                    print("[Python] Generating C header...")
+                    gen = generators.CHeader(rmap, path='sw/regs.h', prefix='CSR')
+                    gen.generate()
+                    with open('sw/regs.h', 'r') as f:
+                        outputs['c'] = f.read()
+                    print(f"[Python] ✓ C header generated ({len(outputs['c'])} chars)")
                 except Exception as e:
-                    print(f"[Python] C header generation failed: {e}", file=sys.stderr)
-
-            if options.get('docs', True) and Markdown_cls:
+                    print(f"[Python] C header generation error: {e}")
+                    traceback.print_exc()
+                    outputs['c'] = f"Error generating C header: {e}"
+            
+            # Markdown documentation
+            if options.get('docs', True):
                 try:
-                    ok = try_invoke_generator(Markdown_cls, regmap, 'doc/regs.md')
-                    if ok:
-                        print("[Python] Documentation generation attempt finished (success)")
-                    else:
-                        print("[Python] Documentation generation attempt finished (no suitable invocation)")
+                    print("[Python] Generating Markdown documentation...")
+                    gen = generators.Markdown(rmap, path='doc/regs.md', title='Register Map', 
+                                             print_images=True, image_dir='md_img', print_conventions=True)
+                    gen.generate()
+                    with open('doc/regs.md', 'r') as f:
+                        outputs['docs'] = f.read()
+                    print(f"[Python] ✓ Markdown doc generated ({len(outputs['docs'])} chars)")
                 except Exception as e:
-                    print(f"[Python] Documentation generation failed: {e}", file=sys.stderr)
-
-            # Ensure cwd is outdir before reading files
-            try:
-                os.chdir(outdir)
-            except Exception:
-                pass
-            print("[Python] Generation phase complete, checking for output files...")
-
-            # Read generated files from the configured paths
-            output_files = {
-                'vhdl': ['hw/regs.vhd', 'regs.vhd'],  # generated path, fallback
-                'c': ['sw/regs.h', 'regs.h'],
-                'docs': ['doc/regs.md', 'regs.md']
-            }
-
-            for output_type, file_paths in output_files.items():
-                if not options.get(output_type, True):
-                    print(f"[Python] Skipping {output_type} (disabled in options)")
-                    continue
-                    
-                content = None
-                for file_path in file_paths:
-                    try:
-                        with open(file_path, 'r') as f:
-                            content = f.read()
-                            print(f"[Python] Read {output_type} from {file_path} ({len(content)} chars)")
-                            break
-                    except FileNotFoundError:
-                        print(f"[Python] File not found: {file_path}")
+                    print(f"[Python] Markdown generation error: {e}")
+                    traceback.print_exc()
+                    outputs['docs'] = f"Error generating Markdown: {e}"
+            
+            # AsciiDoc documentation
+            if options.get('docs', True):
+                try:
+                    print("[Python] Generating AsciiDoc documentation...")
+                    gen = generators.Asciidoc(rmap, path='doc/regs.adoc', title='Register Map',
+                                             print_images=True, image_dir='adoc_img', print_conventions=True)
+                    gen.generate()
+                    print("[Python] ✓ AsciiDoc doc generated")
+                except Exception as e:
+                    print(f"[Python] AsciiDoc generation error: {e}")
+                    traceback.print_exc()
+            
+            # Collect all generated files
+            files = {}
+            for root, _, filenames in os.walk('.'):
+                for fname in filenames:
+                    fpath = os.path.join(root, fname)
+                    # Skip the input regs.json
+                    if fpath == './regs.json':
                         continue
+                    rel = os.path.relpath(fpath, '.')
+                    try:
+                        with open(fpath, 'rb') as fh:
+                            data = fh.read()
+                        b64 = base64.b64encode(data).decode('ascii')
+                        files[rel] = b64
+                        print(f"[Python] Collected file: {rel} ({len(data)} bytes)")
                     except Exception as e:
-                        print(f"[Python] Error reading {file_path}: {e}")
-                        continue
-                
-                if content and content.strip():
-                    outputs[output_type] = content
-                else:
-                    outputs[output_type] = f"No {output_type} output generated."
-                    print(f"[Python] Warning: No content for {output_type}")
-
+                        print(f"[Python] Warning: could not read generated file {fpath}: {e}", file=sys.stderr)
+            
+            outputs['files'] = files
+            print(f"[Python] Generation complete: vhdl={bool(outputs.get('vhdl'))}, c={bool(outputs.get('c'))}, docs={bool(outputs.get('docs'))}, total_files={len(files)}")
+            
+            return json.dumps({
+                'success': True,
+                'outputs': outputs
+            })
         finally:
-            try:
-                os.chdir(old_cwd)
-            except Exception:
-                pass
-
-        # Collect any files generated in the output directory and include them in the response
-        files = {}
-        for root, _, filenames in os.walk(outdir):
-            for fname in filenames:
-                fpath = os.path.join(root, fname)
-                rel = os.path.relpath(fpath, outdir)
-                try:
-                    with open(fpath, 'rb') as fh:
-                        data = fh.read()
-                    b64 = base64.b64encode(data).decode('ascii')
-                    files[rel] = b64
-                    print(f"[Python] Collected file: {rel} ({len(data)} bytes)")
-                except Exception as e:
-                    print(f"[Python] Warning: could not read generated file {fpath}: {e}", file=sys.stderr)
-
-        outputs['files'] = files
-        print(f"[Python] Final outputs: vhdl={bool(outputs.get('vhdl'))}, c={bool(outputs.get('c'))}, docs={bool(outputs.get('docs'))}, files={len(files)}")
-
-        return json.dumps({
-            'success': True,
-            'outputs': outputs
-        })
+            os.chdir(old_cwd)
 
     except Exception as e:
         tb = traceback.format_exc()
@@ -1005,6 +733,7 @@ def generate_outputs(regs_json_content, options, csrconfig_content=None, csrconf
             'error': str(e),
             'traceback': tb
         })
+
 
 def validate_config(config_json):
     """Validate register map configuration"""
@@ -1070,7 +799,7 @@ print("Corsair wrapper loaded successfully")
 /**
  * Run Corsair generation with the provided configuration
  */
-async function runCorsairGeneration(configJson, options, csrconfigContent = null, csrconfigFilename = null, regsFilename = null) {
+async function runCorsairGeneration(configJson, options, baseAddress = '0x00000000', readFiller = '0xdeadbeef') {
     if (!corsairReady) {
         throw new Error('Python environment is not ready yet. Please wait for initialization to complete.');
     }
@@ -1080,7 +809,7 @@ async function runCorsairGeneration(configJson, options, csrconfigContent = null
     }
 
     try {
-        console.log('[Corsair] Starting generation with options:', options);
+        console.log('[Corsair] Starting generation with options:', options, 'base:', baseAddress, 'filler:', readFiller);
 
         // Escape the JSON string properly for Python
         const escapedJson = configJson
@@ -1095,40 +824,12 @@ async function runCorsairGeneration(configJson, options, csrconfigContent = null
             .replace(/'/g, "\\'")
             .replace(/\n/g, '\\n')
             .replace(/\r/g, '\\r');
+        
+        // Escape base_address and read_filler
+        const escapedBaseAddress = String(baseAddress).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const escapedReadFiller = String(readFiller).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-        // Prepare csrconfig content and filename (if present)
-        let escapedCsr = null;
-        let escapedCsrName = null;
-        if (csrconfigContent !== null && typeof csrconfigContent !== 'undefined') {
-            escapedCsr = String(csrconfigContent)
-                .replace(/\\/g, '\\\\')
-                .replace(/'/g, "\\'")
-                .replace(/\n/g, '\\n')
-                .replace(/\r/g, '\\r');
-            escapedCsrName = String(csrconfigFilename || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        }
-
-        // Escape regs filename if provided
-        let escapedRegsName = null;
-        if (regsFilename) {
-            escapedRegsName = String(regsFilename).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        }
-
-        let pythonCode;
-        if (escapedCsr !== null) {
-            // pass regs filename as the 5th argument if available
-            if (escapedRegsName) {
-                pythonCode = `generate_outputs('''${escapedJson}''', '''${escapedOptions}''', '''${escapedCsr}''', '''${escapedCsrName}''', '''${escapedRegsName}''')`;
-            } else {
-                pythonCode = `generate_outputs('''${escapedJson}''', '''${escapedOptions}''', '''${escapedCsr}''', '''${escapedCsrName}''')`;
-            }
-        } else {
-            if (escapedRegsName) {
-                pythonCode = `generate_outputs('''${escapedJson}''', '''${escapedOptions}''', None, None, '''${escapedRegsName}''')`;
-            } else {
-                pythonCode = `generate_outputs('''${escapedJson}''', '''${escapedOptions}''')`;
-            }
-        }
+        const pythonCode = `generate_outputs('''${escapedJson}''', '''${escapedOptions}''', '''${escapedBaseAddress}''', '''${escapedReadFiller}''')`;
 
         console.log('[Corsair] Running Python generation...');
 

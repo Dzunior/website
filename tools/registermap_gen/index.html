@@ -25,7 +25,6 @@
                     <img src="../../img/portfolio/mylium_logo.png" alt="Mylium Logo" style="height:40px;vertical-align:middle;margin-right:12px;">
                     <span class="mdc-top-app-bar__title">MYLIUM</span>
                 </a>
-                <span id="tool-version" style="margin-left:16px;font-size:12px;color:rgba(255,255,255,0.7);"></span>
             </section>
             <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
                 <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" id="theme-toggle">brightness_4</button>
@@ -150,8 +149,9 @@
                     </div>
                 </div>
 
-                <!-- Input Configuration -->
-                <div class="mdc-card">
+                <!-- Output Configuration -->
+                    <!-- Input Configuration -->
+                    <div class="mdc-card">
                         <div class="mdc-card__content">
                             <h2 class="mdc-typography--headline6">Input Configuration</h2>
                             <div class="config-row">
@@ -174,6 +174,63 @@
                                         </div>
                                         <div class="mdc-notched-outline__trailing"></div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Output Configuration -->
+                    <div class="mdc-card">
+                        <div class="mdc-card__content">
+                            <h2 class="mdc-typography--headline6">Output Configuration</h2>
+                            <div class="checkbox-group">
+                                <div class="mdc-form-field">
+                                    <div class="mdc-checkbox">
+                                        <input type="checkbox" class="mdc-checkbox__native-control" id="output-vhdl" checked>
+                                        <div class="mdc-checkbox__background">
+                                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                                <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                            </svg>
+                                            <div class="mdc-checkbox__mixedmark"></div>
+                                        </div>
+                                    </div>
+                                    <label for="output-vhdl">VHDL Module</label>
+                                </div>
+                                <div class="mdc-form-field">
+                                    <div class="mdc-checkbox">
+                                        <input type="checkbox" class="mdc-checkbox__native-control" id="output-c" checked>
+                                        <div class="mdc-checkbox__background">
+                                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                                <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                            </svg>
+                                            <div class="mdc-checkbox__mixedmark"></div>
+                                        </div>
+                                    </div>
+                                    <label for="output-c">C Header</label>
+                                </div>
+                                <div class="mdc-form-field">
+                                    <div class="mdc-checkbox">
+                                        <input type="checkbox" class="mdc-checkbox__native-control" id="output-docs" checked>
+                                        <div class="mdc-checkbox__background">
+                                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                                <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                            </svg>
+                                            <div class="mdc-checkbox__mixedmark"></div>
+                                        </div>
+                                    </div>
+                                    <label for="output-docs">Documentation</label>
+                                </div>
+                                <div class="mdc-form-field">
+                                    <div class="mdc-checkbox">
+                                        <input type="checkbox" class="mdc-checkbox__native-control" id="output-axil" checked>
+                                        <div class="mdc-checkbox__background">
+                                            <svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                                                <path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+                                            </svg>
+                                            <div class="mdc-checkbox__mixedmark"></div>
+                                        </div>
+                                    </div>
+                                    <label for="output-axil">AXI-Lite Interface</label>
                                 </div>
                             </div>
                         </div>
@@ -206,15 +263,6 @@
                                             </span>
                                             <span class="mdc-tab__ripple"></span>
                                         </button>
-                                        <button class="mdc-tab" role="tab" data-tab="testbench">
-                                            <span class="mdc-tab__content">
-                                                <span class="mdc-tab__text-label">VHDL Testbench</span>
-                                            </span>
-                                            <span class="mdc-tab-indicator">
-                                                <span class="mdc-tab-indicator__content mdc-tab-indicator__content--underline"></span>
-                                            </span>
-                                            <span class="mdc-tab__ripple"></span>
-                                        </button>
                                         <button class="mdc-tab" role="tab" data-tab="c">
                                             <span class="mdc-tab__content">
                                                 <span class="mdc-tab__text-label">C Header</span>
@@ -241,15 +289,27 @@
                         <div class="tab-content">
                             <div id="tab-vhdl" class="tab-panel active">
                                 <pre><code class="language-vhdl" id="output-vhdl-code"></code></pre>
-                            </div>
-                            <div id="tab-testbench" class="tab-panel">
-                                <pre><code class="language-vhdl" id="output-testbench-code"></code></pre>
+                                <button class="mdc-button mdc-button--outlined" onclick="downloadFile('vhdl')">
+                                    <span class="mdc-button__ripple"></span>
+                                    <i class="material-icons mdc-button__icon">download</i>
+                                    <span class="mdc-button__label">Download VHDL</span>
+                                </button>
                             </div>
                             <div id="tab-c" class="tab-panel">
                                 <pre><code class="language-c" id="output-c-code"></code></pre>
+                                <button class="mdc-button mdc-button--outlined" onclick="downloadFile('c')">
+                                    <span class="mdc-button__ripple"></span>
+                                    <i class="material-icons mdc-button__icon">download</i>
+                                    <span class="mdc-button__label">Download C Header</span>
+                                </button>
                             </div>
                             <div id="tab-docs" class="tab-panel">
                                 <pre><code class="language-markdown" id="output-docs-code"></code></pre>
+                                <button class="mdc-button mdc-button--outlined" onclick="downloadFile('docs')">
+                                    <span class="mdc-button__ripple"></span>
+                                    <i class="material-icons mdc-button__icon">download</i>
+                                    <span class="mdc-button__label">Download Documentation</span>
+                                </button>
                             </div>
                         </div>
 

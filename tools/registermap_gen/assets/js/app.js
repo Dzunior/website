@@ -179,33 +179,5 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Fetch and display version information
-async function fetchVersionInfo() {
-    try {
-        // Try to get the version from the GitHub API
-        const response = await fetch('https://api.github.com/repos/Dzunior/website/commits/HEAD');
-        if (response.ok) {
-            const data = await response.json();
-            const sha = data.sha.substring(0, 7);
-            const versionEl = document.getElementById('tool-version');
-            if (versionEl) {
-                versionEl.textContent = `v${sha}`;
-            }
-        }
-    } catch (error) {
-        console.warn('Could not fetch version info:', error);
-        // Fallback to a static version
-        const versionEl = document.getElementById('tool-version');
-        if (versionEl) {
-            versionEl.textContent = 'v1.0';
-        }
-    }
-}
-
-// Fetch version on load
-document.addEventListener('DOMContentLoaded', () => {
-    fetchVersionInfo();
-});
-
 console.log('Corsair Register Map Generator initialized');
 console.log('Visit https://corsair.readthedocs.io for documentation');

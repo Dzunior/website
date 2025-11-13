@@ -620,15 +620,20 @@ architecture behavioral of tb_regs is
     -- Register interface signals (examples, customize as needed)
 """
     
-    # Add signal declarations for each register's bitfields
+    # Add signal declarations for each register's bitfields and collect port mappings
+    port_mappings = []
     for reg in rmap:
         for bf in reg.bitfields:
             if 'w' in bf.access.lower() or bf.access.lower() in ['rw', 'wo', 'wosc']:
                 # Output signal for writable fields
-                tb_content += f"    signal {reg.name.lower()}_{bf.name.lower()}_out : std_logic_vector({bf.width-1} downto 0) := (others => '0');\\n"
+                signal_name = f"{reg.name.lower()}_{bf.name.lower()}_out"
+                tb_content += f"    signal {signal_name} : std_logic_vector({bf.width-1} downto 0) := (others => '0');\\n"
+                port_mappings.append(f"            {signal_name} => {signal_name}")
             if 'r' in bf.access.lower() and bf.hardware in ['i', 'ie']:
                 # Input signal for readable fields with hardware input
-                tb_content += f"    signal {reg.name.lower()}_{bf.name.lower()}_in : std_logic_vector({bf.width-1} downto 0) := (others => '0');\\n"
+                signal_name = f"{reg.name.lower()}_{bf.name.lower()}_in"
+                tb_content += f"    signal {signal_name} : std_logic_vector({bf.width-1} downto 0) := (others => '0');\\n"
+                port_mappings.append(f"            {signal_name} => {signal_name}")
     
     tb_content += f"""
     -- Test control
@@ -664,8 +669,14 @@ begin
             s_axi_rdata   => s_axi_rdata,
             s_axi_rresp   => s_axi_rresp,
             s_axi_rvalid  => s_axi_rvalid,
-            s_axi_rready  => s_axi_rready
-            -- Add register interface signals here as needed
+            s_axi_rready  => s_axi_rready"""
+    
+    # Add register interface signals to port map
+    if port_mappings:
+        tb_content += ",\\n            -- Register interface signals\\n"
+        tb_content += ",\\n".join(port_mappings)
+    
+    tb_content += """
         );
     
     -- Test process

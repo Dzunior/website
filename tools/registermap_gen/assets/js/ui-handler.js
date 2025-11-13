@@ -369,10 +369,10 @@ class UIHandler {
             }
 
             const options = {
-                vhdl: !!document.getElementById('output-vhdl').checked,
-                c: !!document.getElementById('output-c').checked,
-                docs: !!document.getElementById('output-docs').checked,
-                axil: !!document.getElementById('output-axil').checked
+                vhdl: true,  // Always generate VHDL
+                c: true,     // Always generate C header
+                docs: true,  // Always generate documentation
+                axil: true   // Always generate AXI-Lite interface
             };
             
             // Get base_address and read_filler from UI
@@ -419,6 +419,24 @@ class UIHandler {
             vhdlCodeEl.textContent = 'No VHDL output generated.';
         }
         Prism.highlightElement(vhdlCodeEl);
+
+        // Display testbench content
+        const testbenchCodeEl = document.getElementById('output-testbench-code');
+        if (outputs.testbench && outputs.testbench.trim()) {
+            testbenchCodeEl.textContent = outputs.testbench;
+        } else if (outputs._decodedFiles && outputs._decodedFiles['hw/tb_regs.vhd']) {
+            // Try to decode from files if not directly provided
+            try {
+                const decoder = new TextDecoder('utf-8');
+                const content = decoder.decode(outputs._decodedFiles['hw/tb_regs.vhd']);
+                testbenchCodeEl.textContent = content;
+            } catch (e) {
+                testbenchCodeEl.textContent = 'Testbench file available in download package.';
+            }
+        } else {
+            testbenchCodeEl.textContent = 'No testbench output generated.';
+        }
+        Prism.highlightElement(testbenchCodeEl);
 
         const cCodeEl = document.getElementById('output-c-code');
         if (outputs.c && outputs.c.trim()) {
@@ -482,7 +500,7 @@ class UIHandler {
             panel.classList.remove('active');
         });
         
-        const panels = ['tab-vhdl', 'tab-c', 'tab-docs'];
+        const panels = ['tab-vhdl', 'tab-testbench', 'tab-c', 'tab-docs'];
         document.getElementById(panels[index]).classList.add('active');
     }
 

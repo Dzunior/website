@@ -374,12 +374,16 @@ class UIHandler {
                 docs: !!document.getElementById('output-docs').checked,
                 axil: !!document.getElementById('output-axil').checked
             };
+            
+            // Get base_address and read_filler from UI
+            const baseAddress = document.getElementById('input-base-address')?.value || '0x00000000';
+            const readFiller = document.getElementById('input-read-filler')?.value || '0xdeadbeef';
 
             console.debug('[UI] Generation options:', options);
+            console.debug('[UI] Base address:', baseAddress, 'Read filler:', readFiller);
 
-            // If a csrconfig file was uploaded, read it as text and pass it through unchanged to Python
-            // No csrconfig; only pass regsJsonContent and options
-            const result = await runCorsairGeneration(regsJsonContent, options, null, null, regsFilename);
+            // Call generation with base_address and read_filler
+            const result = await runCorsairGeneration(regsJsonContent, options, baseAddress, readFiller);
             console.debug('[UI] Generation result:', result);
 
             if (result && result.success) {

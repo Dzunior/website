@@ -195,6 +195,7 @@ async function fetchVersionInfo() {
         cached = null;
     }
     const versionEl = document.getElementById('tool-version');
+    // Use cached version if it exists and hasn't expired
     if (cached && cached.sha && cached.timestamp && (now - cached.timestamp < CACHE_TTL_MS)) {
         if (versionEl) {
             versionEl.textContent = `v${cached.sha}`;
@@ -211,10 +212,15 @@ async function fetchVersionInfo() {
                 versionEl.textContent = `v${sha}`;
             }
             // Cache the result
-            localStorage.setItem(CACHE_KEY, JSON.stringify({
-                sha: sha,
-                timestamp: now
-            }));
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    sha: sha,
+                    timestamp: now
+                }));
+            } catch (e) {
+                // localStorage save failed (private mode, quota exceeded, etc.)
+                console.warn('Could not cache version info:', e);
+            }
         } else {
             throw new Error('GitHub API response not OK');
         }

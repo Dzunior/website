@@ -420,24 +420,6 @@ class UIHandler {
         }
         Prism.highlightElement(vhdlCodeEl);
 
-        // Display testbench content
-        const testbenchCodeEl = document.getElementById('output-testbench-code');
-        if (outputs.testbench && outputs.testbench.trim()) {
-            testbenchCodeEl.textContent = outputs.testbench;
-        } else if (outputs._decodedFiles && outputs._decodedFiles['hw/tb_regs.vhd']) {
-            // Try to decode from files if not directly provided
-            try {
-                const decoder = new TextDecoder('utf-8');
-                const content = decoder.decode(outputs._decodedFiles['hw/tb_regs.vhd']);
-                testbenchCodeEl.textContent = content;
-            } catch (e) {
-                testbenchCodeEl.textContent = 'Testbench file available in download package.';
-            }
-        } else {
-            testbenchCodeEl.textContent = 'No testbench output generated.';
-        }
-        Prism.highlightElement(testbenchCodeEl);
-
         const cCodeEl = document.getElementById('output-c-code');
         if (outputs.c && outputs.c.trim()) {
             cCodeEl.textContent = outputs.c;
@@ -471,6 +453,24 @@ class UIHandler {
                 }
             });
         }
+
+        // Display testbench content - moved after file decoding
+        const testbenchCodeEl = document.getElementById('output-testbench-code');
+        if (outputs.testbench && outputs.testbench.trim()) {
+            testbenchCodeEl.textContent = outputs.testbench;
+        } else if (outputs._decodedFiles && outputs._decodedFiles['hw/tb_regs.vhd']) {
+            // Try to decode from files if not directly provided
+            try {
+                const decoder = new TextDecoder('utf-8');
+                const content = decoder.decode(outputs._decodedFiles['hw/tb_regs.vhd']);
+                testbenchCodeEl.textContent = content;
+            } catch (e) {
+                testbenchCodeEl.textContent = 'Testbench file available in download package.';
+            }
+        } else {
+            testbenchCodeEl.textContent = 'No testbench output generated.';
+        }
+        Prism.highlightElement(testbenchCodeEl);
 
         window.generatedOutputs = outputs;
 

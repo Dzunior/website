@@ -129,6 +129,7 @@ const exampleConfigs = {
 };
 // Add button to load default example and auto-load it if no file is present
 document.addEventListener('DOMContentLoaded', () => {
+    // Load example button setup
     const exampleBtn = document.createElement('button');
     exampleBtn.className = 'mdc-button mdc-button--outlined';
     exampleBtn.innerHTML = '<span class="mdc-button__ripple"></span><span class="mdc-button__label">Load Default regs.json</span>';
@@ -144,6 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
             loadExample('default');
         }
     }, 300);
+    
+    // Fetch version information
+    fetchVersionInfo();
 });
 
 // Load example
@@ -181,31 +185,53 @@ document.addEventListener('keydown', (e) => {
 
 // Fetch and display version information
 async function fetchVersionInfo() {
+    const CACHE_KEY = 'toolVersionInfo';
+    const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+    const now = Date.now();
+    let cached = null;
+    try {
+        cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+    } catch (e) {
+        cached = null;
+    }
+    const versionEl = document.getElementById('tool-version');
+    // Use cached version if it exists and hasn't expired
+    if (cached && cached.sha && cached.timestamp && (now - cached.timestamp < CACHE_TTL_MS)) {
+        if (versionEl) {
+            versionEl.textContent = `v${cached.sha}`;
+        }
+        return;
+    }
     try {
         // Try to get the version from the GitHub API
         const response = await fetch('https://api.github.com/repos/Dzunior/website/commits/HEAD');
         if (response.ok) {
             const data = await response.json();
             const sha = data.sha.substring(0, 7);
-            const versionEl = document.getElementById('tool-version');
             if (versionEl) {
                 versionEl.textContent = `v${sha}`;
             }
+            // Cache the result
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    sha: sha,
+                    timestamp: now
+                }));
+            } catch (e) {
+                // localStorage save failed (private mode, quota exceeded, etc.)
+                console.warn('Could not cache version info:', e);
+            }
+        } else {
+            throw new Error('GitHub API response not OK');
         }
     } catch (error) {
         console.warn('Could not fetch version info:', error);
         // Fallback to a static version
-        const versionEl = document.getElementById('tool-version');
         if (versionEl) {
             versionEl.textContent = 'v1.0';
         }
     }
 }
-
-// Fetch version on load
-document.addEventListener('DOMContentLoaded', () => {
-    fetchVersionInfo();
-});
 
 console.log('Corsair Register Map Generator initialized');
 console.log('Visit https://corsair.readthedocs.io for documentation');

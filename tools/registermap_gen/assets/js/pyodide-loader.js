@@ -625,10 +625,10 @@ architecture behavioral of tb_regs is
         for bf in reg.bitfields:
             if 'w' in bf.access.lower() or bf.access.lower() in ['rw', 'wo', 'wosc']:
                 # Output signal for writable fields
-                tb_content += f"    signal {reg.name.lower()}_{bf.name.lower()}_out : std_logic_vector({bf.width-1} downto 0) := (others => '0');\n"
+                tb_content += f"    signal {{reg.name.lower()}}_{{bf.name.lower()}}_out : std_logic_vector({{bf.width-1}} downto 0) := (others => '0');\\n"
             if 'r' in bf.access.lower() and bf.hardware in ['i', 'ie']:
                 # Input signal for readable fields with hardware input
-                tb_content += f"    signal {reg.name.lower()}_{bf.name.lower()}_in : std_logic_vector({bf.width-1} downto 0) := (others => '0');\n"
+                tb_content += f"    signal {{reg.name.lower()}}_{{bf.name.lower()}}_in : std_logic_vector({{bf.width-1}} downto 0) := (others => '0');\\n"
     
     tb_content += f"""
     -- Test control

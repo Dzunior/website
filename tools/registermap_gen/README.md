@@ -24,10 +24,11 @@ A browser-based tool for generating VHDL modules, C headers, and documentation f
 The tool generates the following files based on the `regs.json` input:
 
 1. **VHDL Module** (`hw/regs.vhd`) - Register map implementation with AXI-Lite interface
-2. **C Header** (`sw/regs.h`) - Register definitions and access macros for software
-3. **Markdown Documentation** (`doc/regs.md`) - Human-readable register map documentation with wavedrom diagrams
-4. **AsciiDoc Documentation** (`doc/regs.adoc`) - AsciiDoc format documentation with wavedrom diagrams
-5. **Wavedrom Images** - SVG diagrams for register bit field visualization
+2. **VHDL Testbench** (`hw/tb_regs.vhd`) - AXI-Lite testbench with read/write procedures and automated tests
+3. **C Header** (`sw/regs.h`) - Register definitions and access macros for software
+4. **Markdown Documentation** (`doc/regs.md`) - Human-readable register map documentation with wavedrom diagrams
+5. **AsciiDoc Documentation** (`doc/regs.adoc`) - AsciiDoc format documentation with wavedrom diagrams
+6. **Wavedrom Images** - SVG diagrams for register bit field visualization
 
 ## Usage
 

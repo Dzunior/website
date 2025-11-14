@@ -3,6 +3,7 @@
 # This implementation generates proper register bit field SVG visualizations.
 import json
 from xml.etree import ElementTree as ET
+from xml.sax.saxutils import escape
 
 class _DummySVG:
     def __init__(self, svg_str=''):
@@ -50,14 +51,15 @@ def render(json_str):
 def _generate_register_svg(fields, total_bits, fontsize, lanes):
     """Generate SVG representation of register bit fields."""
     
-    # SVG dimensions and styling
-    bit_width = 20  # Width per bit in pixels
-    lane_height = 60  # Height per lane
-    margin = 20
+    # SVG dimensions and styling constants
+    BIT_WIDTH_PX = 20  # Width per bit in pixels
+    LANE_HEIGHT_PX = 60  # Height per lane
+    MARGIN_PX = 20
+    BIT_NUMBER_SPACE_PX = 30  # Extra space for bit numbers
     
     # Calculate total width based on total bits
-    svg_width = total_bits * bit_width + 2 * margin
-    svg_height = lanes * lane_height + 2 * margin + 30  # Extra space for bit numbers
+    svg_width = total_bits * BIT_WIDTH_PX + 2 * MARGIN_PX
+    svg_height = lanes * LANE_HEIGHT_PX + 2 * MARGIN_PX + BIT_NUMBER_SPACE_PX
     
     # Start building SVG
     svg_parts = []
@@ -77,8 +79,8 @@ def _generate_register_svg(fields, total_bits, fontsize, lanes):
     ''')
     
     # Draw register fields
-    x_offset = margin
-    y_offset = margin + 20  # Leave space for top bit numbers
+    x_offset = MARGIN_PX
+    y_offset = MARGIN_PX + 20  # Leave space for top bit numbers
     
     current_bit = total_bits  # Start from MSB
     
@@ -89,27 +91,30 @@ def _generate_register_svg(fields, total_bits, fontsize, lanes):
         
         
         # Calculate field width
-        field_width = bits * bit_width
+        field_width = bits * BIT_WIDTH_PX
         
         # Determine if this is a reserved field
         is_reserved = name == '' or name.lower() == 'reserved' or name.lower().startswith('reserved')
         
         # Draw field rectangle
         box_class = 'reserved-box' if is_reserved else 'field-box'
-        svg_parts.append(f'<rect x="{x_offset}" y="{y_offset}" width="{field_width}" height="{lane_height}" class="{box_class}"/>')
+        svg_parts.append(f'<rect x="{x_offset}" y="{y_offset}" width="{field_width}" height="{LANE_HEIGHT_PX}" class="{box_class}"/>')
         
         # Add field name (centered in the field)
         text_x = x_offset + field_width / 2
-        text_y = y_offset + lane_height / 2 - 2
+        text_y = y_offset + LANE_HEIGHT_PX / 2 - 2
         
         if name and not is_reserved:
+            # Escape name and attr to prevent XML/SVG injection
+            escaped_name = escape(name)
             # Split long names if needed
-            svg_parts.append(f'<text x="{text_x}" y="{text_y}" class="field-text">{name}</text>')
+            svg_parts.append(f'<text x="{text_x}" y="{text_y}" class="field-text">{escaped_name}</text>')
             
             # Add attribute below name if present
             if attr:
+                escaped_attr = escape(attr)
                 attr_y = text_y + fontsize + 2
-                svg_parts.append(f'<text x="{text_x}" y="{attr_y}" class="attr-text">{attr}</text>')
+                svg_parts.append(f'<text x="{text_x}" y="{attr_y}" class="attr-text">{escaped_attr}</text>')
         
         # Add bit numbers at top and bottom
         start_bit = current_bit - 1
@@ -124,7 +129,7 @@ def _generate_register_svg(fields, total_bits, fontsize, lanes):
             svg_parts.append(f'<text x="{x_offset + field_width - 5}" y="{y_offset - 5}" class="bit-text">{end_bit}</text>')
         
         # Bottom bit number(s) 
-        bottom_y = y_offset + lane_height + 12
+        bottom_y = y_offset + LANE_HEIGHT_PX + 12
         if bits == 1:
             svg_parts.append(f'<text x="{text_x}" y="{bottom_y}" class="bit-text">{start_bit}</text>')
         else:

@@ -92,7 +92,7 @@ def _generate_register_svg(fields, total_bits, fontsize, lanes):
         field_width = bits * bit_width
         
         # Determine if this is a reserved field
-        is_reserved = 'reserved' in name.lower() or name == ''
+        is_reserved = name == '' or name.lower() == 'reserved' or name.lower().startswith('reserved')
         
         # Draw field rectangle
         box_class = 'reserved-box' if is_reserved else 'field-box'

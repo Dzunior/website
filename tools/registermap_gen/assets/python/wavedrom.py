@@ -86,7 +86,7 @@ def _generate_register_svg(fields, total_bits, fontsize, lanes):
         bits = field.get('bits', 1)
         name = field.get('name', '')
         attr = field.get('attr', '')
-        field_type = field.get('type', '')
+        
         
         # Calculate field width
         field_width = bits * bit_width

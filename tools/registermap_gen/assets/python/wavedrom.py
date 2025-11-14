@@ -104,11 +104,7 @@ def _generate_register_svg(fields, total_bits, fontsize, lanes):
         
         if name and not is_reserved:
             # Split long names if needed
-            if len(name) > bits * 1.5 and bits > 4:
-                # Try to fit text
-                svg_parts.append(f'<text x="{text_x}" y="{text_y}" class="field-text">{name}</text>')
-            else:
-                svg_parts.append(f'<text x="{text_x}" y="{text_y}" class="field-text">{name}</text>')
+            svg_parts.append(f'<text x="{text_x}" y="{text_y}" class="field-text">{name}</text>')
             
             # Add attribute below name if present
             if attr:

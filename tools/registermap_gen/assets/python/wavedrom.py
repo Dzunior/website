@@ -84,7 +84,9 @@ def _generate_register_svg(fields, total_bits, fontsize, lanes):
     
     current_bit = total_bits  # Start from MSB
     
-    for field in fields:
+    # Reverse fields array to draw from MSB to LSB
+    # Fields come in LSB-first order but should be drawn MSB-first (left to right)
+    for field in reversed(fields):
         bits = field.get('bits', 1)
         name = field.get('name', '')
         attr = field.get('attr', '')

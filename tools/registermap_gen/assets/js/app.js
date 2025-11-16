@@ -204,7 +204,7 @@ async function fetchVersionInfo() {
     }
     try {
         // Try to get the version from the GitHub API
-        const response = await fetch('https://api.github.com/repos/Dzunior/website/commits/HEAD');
+        const response = await fetch('https://api.github.com/repos/MyliumFPGA/website/commits/HEAD');
         if (response.ok) {
             const data = await response.json();
             const sha = data.sha.substring(0, 7);

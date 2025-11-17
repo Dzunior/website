@@ -270,3 +270,38 @@ body {
 .mb-16 {
     margin-bottom: 16px;
 }
+
+/* Attribution Footer */
+.attribution-footer {
+    margin-top: 48px;
+    padding: 24px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    text-align: center;
+}
+
+[data-theme="dark"] .attribution-footer {
+    border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+.attribution-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.attribution-footer p {
+    margin: 0;
+    color: var(--mdc-theme-on-surface);
+    opacity: 0.7;
+}
+
+.attribution-footer a {
+    color: var(--mdc-theme-primary);
+    text-decoration: none;
+    transition: opacity 0.2s;
+}
+
+.attribution-footer a:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}

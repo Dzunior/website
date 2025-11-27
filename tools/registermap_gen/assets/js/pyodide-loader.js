@@ -622,7 +622,9 @@ architecture behavioral of tb_regs is
     constant AXI_RESP_SLVERR : std_logic_vector(1 downto 0) := "10";
     constant AXI_RESP_DECERR : std_logic_vector(1 downto 0) := "11";
     
-    -- AXI-Lite signals (Active Low Reset: ARESETN directly tied to NOT rst)
+    -- AXI-Lite signals
+    -- Note: This testbench uses active-high 'rst' signal; the DUT may use ARESETN (active-low).
+    -- Adapt the port mapping if needed (e.g., aresetn => not rst).
     -- All VALID signals initialized to '0' per AXI spec requirement
     signal s_axi_awaddr  : std_logic_vector({addr_width-1} downto 0) := (others => '0');
     signal s_axi_awprot  : std_logic_vector(2 downto 0) := (others => '0');
@@ -709,6 +711,9 @@ begin
     -- Test process
     test_proc: process
         
+        -- Error counter (using variable for procedure access)
+        variable error_count : integer := 0;
+        
         ------------------------------------------------------------------------
         -- AXI-Lite Write Procedure (AXI4-Lite Protocol Compliant)
         --
@@ -765,7 +770,7 @@ begin
                 if timeout_cnt >= TIMEOUT_CYCLES then
                     report "AXI Write Address/Data phase timeout - possible protocol violation or DUT hang"
                         severity failure;
-                    errors <= errors + 1;
+                    error_count := error_count + 1;
                     -- Force cleanup and exit
                     s_axi_awvalid <= '0';
                     s_axi_wvalid  <= '0';
@@ -797,7 +802,7 @@ begin
                                    integer'image(to_integer(unsigned(addr)))
                                 severity error;
                         end if;
-                        errors <= errors + 1;
+                        error_count := error_count + 1;
                     end if;
                 end if;
                 
@@ -805,7 +810,7 @@ begin
                 if timeout_cnt >= TIMEOUT_CYCLES then
                     report "AXI Write Response phase timeout - BVALID not received"
                         severity failure;
-                    errors <= errors + 1;
+                    error_count := error_count + 1;
                     s_axi_bready <= '0';
                     return;
                 end if;
@@ -856,7 +861,7 @@ begin
                 if timeout_cnt >= TIMEOUT_CYCLES then
                     report "AXI Read Address phase timeout - ARREADY not received"
                         severity failure;
-                    errors <= errors + 1;
+                    error_count := error_count + 1;
                     s_axi_arvalid <= '0';
                     s_axi_rready  <= '0';
                     data := (others => 'X');
@@ -887,7 +892,7 @@ begin
                                    integer'image(to_integer(unsigned(addr)))
                                 severity error;
                         end if;
-                        errors <= errors + 1;
+                        error_count := error_count + 1;
                     end if;
                 end if;
                 
@@ -895,7 +900,7 @@ begin
                 if timeout_cnt >= TIMEOUT_CYCLES then
                     report "AXI Read Data phase timeout - RVALID not received"
                         severity failure;
-                    errors <= errors + 1;
+                    error_count := error_count + 1;
                     s_axi_rready <= '0';
                     data := (others => 'X');
                     return;
@@ -909,6 +914,9 @@ begin
         variable read_data : std_logic_vector({data_width-1} downto 0);
         
     begin
+        -- Initialize error counter
+        error_count := 0;
+        
         ------------------------------------------------------------------------
         -- Reset Sequence
         -- Per AXI4-Lite spec: All VALID signals must be driven low during reset
@@ -968,7 +976,8 @@ begin
     
     tb_content += """        -- Test completion
         report "All tests completed";
-        report "Total errors: " & integer'image(errors);
+        report "Total errors: " & integer'image(error_count);
+        errors <= error_count;
         test_done <= true;
         wait;
         

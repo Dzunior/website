@@ -923,12 +923,8 @@ begin
         ------------------------------------------------------------------------
         report "Initializing testbench...";
         
-        -- Explicitly drive all VALID signals low during reset (AXI requirement)
-        s_axi_awvalid <= '0';
-        s_axi_wvalid  <= '0';
-        s_axi_arvalid <= '0';
-        s_axi_bready  <= '0';
-        s_axi_rready  <= '0';
+        -- VALID and READY signals are already initialized to '0' in their declarations
+        -- (see lines 631, 635, 639, 642, 647), so explicit assignments here are omitted.
         
         -- Assert reset for sufficient time (minimum 1 clock cycle, using 16+ for safety)
         rst <= '1';

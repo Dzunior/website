@@ -792,7 +792,7 @@ begin
                     b_done := true;
                     
                     -- Check BRESP for errors
-                    if s_axi_bresp /= AXI_RESP_OKAY and s_axi_bresp /= AXI_RESP_EXOKAY then
+                    if s_axi_bresp /= AXI_RESP_OKAY then
                         if s_axi_bresp = AXI_RESP_SLVERR then
                             report "AXI Write received SLVERR response at address " & 
                                    integer'image(to_integer(unsigned(addr)))

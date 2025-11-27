@@ -741,7 +741,8 @@ begin
             s_axi_wdata   <= data;
             s_axi_wstrb   <= (others => '1');
             s_axi_wvalid  <= '1';
-            s_axi_bready  <= '1';
+            -- BREADY is NOT asserted yet - this tests DUT's ability to handle
+            -- delayed BREADY (the DUT must hold BVALID stable until BREADY is asserted)
             
             -- Wait for both AW and W handshakes using a single clock loop
             -- This pattern correctly handles simultaneous or sequential completions
@@ -774,13 +775,14 @@ begin
                     -- Force cleanup and exit
                     s_axi_awvalid <= '0';
                     s_axi_wvalid  <= '0';
-                    s_axi_bready  <= '0';
                     return;
                 end if;
             end loop;
             
             -- Wait for write response (B channel)
             -- BVALID can only be asserted after both AW and W handshakes complete
+            -- Assert BREADY after AW/W complete to test DUT's ability to hold BVALID stable
+            s_axi_bready  <= '1';
             b_done := false;
             timeout_cnt := 0;
             

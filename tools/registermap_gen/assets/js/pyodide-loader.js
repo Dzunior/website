@@ -624,7 +624,7 @@ architecture behavioral of tb_regs is
     
     -- AXI-Lite signals
     -- Note: This testbench uses active-high 'rst' signal; the DUT may use ARESETN (active-low).
-    -- Adapt the port mapping if needed (e.g., aresetn => not rst).
+    -- IMPORTANT: If your DUT uses an active-low reset (e.g., ARESETN), you MUST manually modify the port mapping (e.g., aresetn => not rst).
     -- All VALID signals initialized to '0' per AXI spec requirement
     signal s_axi_awaddr  : std_logic_vector({addr_width-1} downto 0) := (others => '0');
     signal s_axi_awprot  : std_logic_vector(2 downto 0) := (others => '0');

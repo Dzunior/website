@@ -760,7 +760,7 @@ begin
                     s_axi_awvalid <= '0';
                 end if;
                 
-                -- Check for W handshake completion  
+                -- Check for W handshake completion
                 if s_axi_wvalid = '1' and s_axi_wready = '1' then
                     w_done := true;
                     s_axi_wvalid <= '0';

@@ -729,10 +729,10 @@ begin
             constant addr : in std_logic_vector({addr_width-1} downto 0);
             constant data : in std_logic_vector({data_width-1} downto 0)
         ) is
-            variable aw_done : boolean := false;
-            variable w_done  : boolean := false;
-            variable b_done  : boolean := false;
-            variable timeout_cnt : integer := 0;
+            variable aw_done : boolean;
+            variable w_done  : boolean;
+            variable b_done  : boolean;
+            variable timeout_cnt : integer;
         begin
             -- Drive both address and data channels simultaneously
             -- This tests the DUT's ability to handle concurrent channel activity

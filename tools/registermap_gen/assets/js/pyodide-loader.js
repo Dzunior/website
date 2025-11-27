@@ -770,9 +770,9 @@ begin
                 -- Timeout check to detect deadlocks
                 if timeout_cnt >= TIMEOUT_CYCLES then
                     report "AXI Write Address/Data phase timeout - possible protocol violation or DUT hang"
-                        severity failure;
+                        severity error;
                     error_count := error_count + 1;
-                    -- Force cleanup and exit
+                    -- Force cleanup and exit (allows testbench to continue with other tests)
                     s_axi_awvalid <= '0';
                     s_axi_wvalid  <= '0';
                     return;
@@ -811,7 +811,7 @@ begin
                 -- Timeout check
                 if timeout_cnt >= TIMEOUT_CYCLES then
                     report "AXI Write Response phase timeout - BVALID not received"
-                        severity failure;
+                        severity error;
                     error_count := error_count + 1;
                     s_axi_bready <= '0';
                     return;
@@ -862,7 +862,7 @@ begin
                 -- Timeout check
                 if timeout_cnt >= TIMEOUT_CYCLES then
                     report "AXI Read Address phase timeout - ARREADY not received"
-                        severity failure;
+                        severity error;
                     error_count := error_count + 1;
                     s_axi_arvalid <= '0';
                     s_axi_rready  <= '0';
@@ -901,7 +901,7 @@ begin
                 -- Timeout check
                 if timeout_cnt >= TIMEOUT_CYCLES then
                     report "AXI Read Data phase timeout - RVALID not received"
-                        severity failure;
+                        severity error;
                     error_count := error_count + 1;
                     s_axi_rready <= '0';
                     data := (others => 'X');

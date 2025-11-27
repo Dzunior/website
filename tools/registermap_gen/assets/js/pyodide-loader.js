@@ -834,9 +834,9 @@ begin
             constant addr : in std_logic_vector({addr_width-1} downto 0);
             variable data : out std_logic_vector({data_width-1} downto 0)
         ) is
-            variable ar_done : boolean := false;
-            variable r_done  : boolean := false;
-            variable timeout_cnt : integer := 0;
+            variable ar_done : boolean;
+            variable r_done  : boolean;
+            variable timeout_cnt : integer;
         begin
             -- Drive read address channel
             -- ARVALID is asserted immediately, not conditioned on ARREADY

@@ -977,7 +977,6 @@ begin
     tb_content += """        -- Test completion
         report "All tests completed";
         report "Total errors: " & integer'image(error_count);
-        errors <= error_count;
         test_done <= true;
         wait;
         

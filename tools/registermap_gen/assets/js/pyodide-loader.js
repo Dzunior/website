@@ -882,7 +882,7 @@ begin
                     data := s_axi_rdata;
                     
                     -- Check RRESP for errors
-                    if s_axi_rresp /= AXI_RESP_OKAY and s_axi_rresp /= AXI_RESP_EXOKAY then
+                    if s_axi_rresp /= AXI_RESP_OKAY then
                         if s_axi_rresp = AXI_RESP_SLVERR then
                             report "AXI Read received SLVERR response at address " &
                                    integer'image(to_integer(unsigned(addr)))

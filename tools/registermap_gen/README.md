@@ -38,8 +38,7 @@ The generated C header includes:
 ### Platform-Specific I/O Abstraction
 
 Automatic detection and use of appropriate I/O functions for:
-- **MicroBlaze**: Uses `Xil_In32()` / `Xil_Out32()` from `xil_io.h`
-- **Zynq ARM (32-bit/64-bit)**: Uses `Xil_In32()` / `Xil_Out32()` from `xil_io.h`
+- **Xilinx platforms (MicroBlaze/Zynq/Zynq UltraScale+)**: Uses `Xil_In32()` / `Xil_Out32()` from `xil_io.h`
 - **Generic platforms**: Uses volatile pointer access
 
 ### Register Access Functions
@@ -58,15 +57,6 @@ For each bitfield, the header provides:
 
 A packed C structure (`csr_regmap_t`) for direct memory-mapped access:
 - `csr_get_regmap()` - Get pointer to the register map structure
-
-### Doxygen Documentation
-
-All functions include Doxygen-style comments with:
-- `@brief` - Short description
-- `@param` - Parameter descriptions
-- `@return` - Return value description
-- `@details` - Detailed description
-- `@note` - Additional notes (bit positions, widths, etc.)
 
 ## Usage
 

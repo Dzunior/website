@@ -759,10 +759,10 @@ static inline volatile csr_regmap_t* csr_get_regmap(void) {
     endif_pos = base_header.rfind('#endif')
     if endif_pos != -1:
         # Insert enhanced content before the final #endif
-        enhanced_header = base_header[:endif_pos] + '\n'.join(enhanced_parts) + '\n' + base_header[endif_pos:]
+        enhanced_header = base_header[:endif_pos] + '\\n'.join(enhanced_parts) + '\\n' + base_header[endif_pos:]
     else:
         # If no #endif found, just append
-        enhanced_header = base_header + '\n'.join(enhanced_parts)
+        enhanced_header = base_header + '\\n'.join(enhanced_parts)
     
     return enhanced_header
 
@@ -890,7 +890,7 @@ Each bitfield has dedicated getter and setter functions:
             if 'w' in bf_access:
                 docs += f'| \`csr_{reg_name_lower}_{bf_name_lower}_set(val)\` | Set {bf_name} field | {bit_range} |\\n'
         
-        docs += '\n'
+        docs += '\\n'
     
     # Document the register map structure
     docs += '''### Register Map Structure

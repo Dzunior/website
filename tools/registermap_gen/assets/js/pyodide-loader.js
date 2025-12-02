@@ -500,65 +500,26 @@ def generate_enhanced_c_header(rmap, base_header, base_address):
 /* ============================================================================
  * PLATFORM-SPECIFIC I/O ABSTRACTION
  * ============================================================================
- * This section provides hardware abstraction for Xilinx Zynq (bare metal) and
- * MicroBlaze platforms. The macros automatically select the appropriate I/O
+ * This section provides hardware abstraction for Xilinx platforms (MicroBlaze,
+ * Zynq, Zynq UltraScale+). The macros automatically select the appropriate I/O
  * functions based on the detected platform.
  * Data width: {data_width} bits ({reg_type})
  * ============================================================================
  */
 
-#if defined(__MICROBLAZE__)
-    /* MicroBlaze platform - uses Xil_In{io_suffix}/Xil_Out{io_suffix} from xil_io.h */
+#if defined(__MICROBLAZE__) || defined(__aarch64__) || defined(__arm__) || defined(ARMR5) || defined(__ARM_ARCH)
+    /* Xilinx platform (MicroBlaze/Zynq/Zynq UltraScale+) - uses Xil_In{io_suffix}/Xil_Out{io_suffix} from xil_io.h */
     #include "xil_io.h"
     
-    /**
-     * @brief Write a value to a memory-mapped register (MicroBlaze)
-     * @param addr Register address
-     * @param val Value to write ({reg_type})
-     */
+    /* Write a value to a memory-mapped register */
     #define CSR_REG_WRITE(addr, val)  Xil_Out{io_suffix}((addr), (val))
     
-    /**
-     * @brief Read a value from a memory-mapped register (MicroBlaze)
-     * @param addr Register address
-     * @return Value read from the register ({reg_type})
-     */
-    #define CSR_REG_READ(addr)        Xil_In{io_suffix}((addr))
-    
-#elif defined(__aarch64__) || defined(__arm__) || defined(ARMR5) || defined(__ARM_ARCH)
-    /* Zynq/Zynq UltraScale+ ARM platform - uses Xil_In{io_suffix}/Xil_Out{io_suffix} from xil_io.h */
-    #include "xil_io.h"
-    
-    /**
-     * @brief Write a value to a memory-mapped register (Zynq ARM)
-     * @param addr Register address
-     * @param val Value to write ({reg_type})
-     */
-    #define CSR_REG_WRITE(addr, val)  Xil_Out{io_suffix}((addr), (val))
-    
-    /**
-     * @brief Read a value from a memory-mapped register (Zynq ARM)
-     * @param addr Register address
-     * @return Value read from the register ({reg_type})
-     */
+    /* Read a value from a memory-mapped register */
     #define CSR_REG_READ(addr)        Xil_In{io_suffix}((addr))
     
 #else
     /* Generic platform - uses volatile pointer access */
-    /**
-     * @brief Write a value to a memory-mapped register (generic)
-     * @param addr Register address
-     * @param val Value to write ({reg_type})
-     * @note Uses volatile pointer access for memory-mapped I/O
-     */
     #define CSR_REG_WRITE(addr, val)  (*((volatile {reg_type}*)(addr)) = (val))
-    
-    /**
-     * @brief Read a value from a memory-mapped register (generic)
-     * @param addr Register address
-     * @return Value read from the register ({reg_type})
-     * @note Uses volatile pointer access for memory-mapped I/O
-     */
     #define CSR_REG_READ(addr)        (*((volatile {reg_type}*)(addr)))
     
 #endif
@@ -568,10 +529,7 @@ def generate_enhanced_c_header(rmap, base_header, base_address):
  * ============================================================================
  */
 
-/**
- * @brief Base address of the register map
- * @note Override this define before including this header to use a different base address
- */
+/* Base address of the register map. Override before including this header to use a different address. */
 #ifndef CSR_BASE_ADDR
 #define CSR_BASE_ADDR  {hex(base_address)}UL
 #endif
@@ -586,7 +544,7 @@ def generate_enhanced_c_header(rmap, base_header, base_address):
  * REGISTER ACCESS FUNCTIONS
  * ============================================================================
  * These functions provide type-safe access to registers with automatic
- * base address calculation. Each function includes Doxygen documentation.
+ * base address calculation.
  * ============================================================================
  */
 
@@ -599,12 +557,7 @@ def generate_enhanced_c_header(rmap, base_header, base_address):
         reg_desc = getattr(reg, 'description', f'{reg.name} register') or f'{reg.name} register'
         
         # Generate read function
-        functions += f'''/**
- * @brief Read the {reg_name} register
- * @return Current value of the {reg_name} register
- * @details {reg_desc}
- * @note Address offset: {hex(reg_addr)}
- */
+        functions += f'''/* Read the {reg_name} register. {reg_desc}. Address offset: {hex(reg_addr)} */
 static inline {reg_type} csr_{reg_name_lower}_read(void) {{
     return CSR_REG_READ(CSR_BASE_ADDR + CSR_{reg_name}_ADDR);
 }}
@@ -616,12 +569,7 @@ static inline {reg_type} csr_{reg_name_lower}_read(void) {{
         
         if has_writable:
             # Generate write function
-            functions += f'''/**
- * @brief Write to the {reg_name} register
- * @param val Value to write to the register
- * @details {reg_desc}
- * @note Address offset: {hex(reg_addr)}
- */
+            functions += f'''/* Write to the {reg_name} register. {reg_desc}. Address offset: {hex(reg_addr)} */
 static inline void csr_{reg_name_lower}_write({reg_type} val) {{
     CSR_REG_WRITE(CSR_BASE_ADDR + CSR_{reg_name}_ADDR, val);
 }}
@@ -656,12 +604,7 @@ static inline void csr_{reg_name_lower}_write({reg_type} val) {{
             
             # Generate field read function (for readable fields)
             if 'r' in bf_access:
-                bitfield_funcs += f'''/**
- * @brief Read the {bf_name} field from {reg_name} register
- * @return Value of the {bf_name} field
- * @details {bf_desc}
- * @note Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width}
- */
+                bitfield_funcs += f'''/* Read the {bf_name} field from {reg_name} register. {bf_desc}. Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width} */
 static inline {reg_type} csr_{reg_name_lower}_{bf_name_lower}_get(void) {{
     return (csr_{reg_name_lower}_read() & CSR_{reg_name}_{bf_name}_MSK) >> CSR_{reg_name}_{bf_name}_LSB;
 }}
@@ -672,26 +615,14 @@ static inline {reg_type} csr_{reg_name_lower}_{bf_name_lower}_get(void) {{
             if 'w' in bf_access:
                 # Check if write-only (wo, wosc) - don't do read-modify-write
                 if bf_access in ['wo', 'wosc']:
-                    bitfield_funcs += f'''/**
- * @brief Write the {bf_name} field in {reg_name} register
- * @param val Value to write to the field (must fit within {bf_width} bits)
- * @details {bf_desc}
- * @note Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width}
- * @note Write-only field - direct write without read-modify-write
- */
+                    bitfield_funcs += f'''/* Write the {bf_name} field in {reg_name} register. {bf_desc}. Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width}. Write-only field. */
 static inline void csr_{reg_name_lower}_{bf_name_lower}_set({reg_type} val) {{
     csr_{reg_name_lower}_write((val << CSR_{reg_name}_{bf_name}_LSB) & CSR_{reg_name}_{bf_name}_MSK);
 }}
 
 '''
                 else:
-                    bitfield_funcs += f'''/**
- * @brief Write the {bf_name} field in {reg_name} register
- * @param val Value to write to the field (must fit within {bf_width} bits)
- * @details {bf_desc}
- * @note Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width}
- * @warning This function performs a read-modify-write operation
- */
+                    bitfield_funcs += f'''/* Write the {bf_name} field in {reg_name} register. {bf_desc}. Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width}. Read-modify-write. */
 static inline void csr_{reg_name_lower}_{bf_name_lower}_set({reg_type} val) {{
     {reg_type} reg_val = csr_{reg_name_lower}_read();
     reg_val = (reg_val & ~CSR_{reg_name}_{bf_name}_MSK) | ((val << CSR_{reg_name}_{bf_name}_LSB) & CSR_{reg_name}_{bf_name}_MSK);
@@ -713,10 +644,7 @@ static inline void csr_{reg_name_lower}_{bf_name_lower}_set({reg_type} val) {{
  * ============================================================================
  */
 
-/**
- * @brief Register map structure for memory-mapped access
- * @note Use csr_get_regmap() to obtain a pointer to this structure
- */
+/* Register map structure for memory-mapped access. Use csr_get_regmap() to obtain a pointer. */
 typedef struct __attribute__((packed)) {
 '''
     
@@ -734,18 +662,14 @@ typedef struct __attribute__((packed)) {
         if reg_addr > prev_addr:
             gap = reg_addr - prev_addr
             if gap > 0:
-                struct_access += f'    uint8_t _reserved_{prev_addr:#x}[{gap}];  /**< Reserved/padding */\\n'
+                struct_access += f'    uint8_t _reserved_{prev_addr:#x}[{gap}];  /* Reserved/padding */\\n'
         
-        struct_access += f'    {reg_type} {reg_name};  /**< @brief {reg_desc} (offset: {hex(reg_addr)}) */\\n'
+        struct_access += f'    {reg_type} {reg_name};  /* {reg_desc} (offset: {hex(reg_addr)}) */\\n'
         prev_addr = reg_addr + (data_width // 8)
     
     struct_access += '''} csr_regmap_t;
 
-/**
- * @brief Get pointer to the register map structure
- * @return Pointer to the memory-mapped register structure
- * @note The pointer is cast from CSR_BASE_ADDR
- */
+/* Get pointer to the register map structure */
 static inline volatile csr_regmap_t* csr_get_regmap(void) {
     return (volatile csr_regmap_t*)CSR_BASE_ADDR;
 }
@@ -798,7 +722,7 @@ def generate_c_api_documentation(rmap):
 
 ## C Software API Reference
 
-The generated C header (\`regs.h\`) provides a complete software API for accessing the register map from Xilinx Zynq (bare metal) and MicroBlaze platforms.
+The generated C header (\`regs.h\`) provides a complete software API for accessing the register map from Xilinx platforms.
 
 ### Platform Support
 
@@ -806,9 +730,7 @@ The header automatically detects the target platform and uses appropriate I/O fu
 
 | Platform | Detection | I/O Functions |
 |----------|-----------|---------------|
-| **MicroBlaze** | \`__MICROBLAZE__\` defined | \`Xil_In{io_suffix}()\` / \`Xil_Out{io_suffix}()\` |
-| **Zynq ARM (32-bit)** | \`__arm__\` or \`ARMR5\` defined | \`Xil_In{io_suffix}()\` / \`Xil_Out{io_suffix}()\` |
-| **Zynq UltraScale+ ARM (64-bit)** | \`__aarch64__\` defined | \`Xil_In{io_suffix}()\` / \`Xil_Out{io_suffix}()\` |
+| **Xilinx (MicroBlaze/Zynq/Zynq UltraScale+)** | \`__MICROBLAZE__\`, \`__arm__\`, \`ARMR5\`, \`__aarch64__\`, or \`__ARM_ARCH\` defined | \`Xil_In{io_suffix}()\` / \`Xil_Out{io_suffix}()\` |
 | **Generic** | None of the above | Volatile pointer access |
 
 ### Base Address Configuration

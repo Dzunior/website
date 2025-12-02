@@ -426,6 +426,44 @@ except ImportError as e:
     CORSAIR_AVAILABLE = False
 
 
+def get_reg_type_for_width(data_width):
+    """Get the C type for a given data width.
+    
+    Args:
+        data_width: Register width in bits (8, 16, 32, or 64)
+    
+    Returns:
+        C type string (e.g., 'uint32_t')
+    """
+    if data_width <= 8:
+        return 'uint8_t'
+    elif data_width <= 16:
+        return 'uint16_t'
+    elif data_width <= 32:
+        return 'uint32_t'
+    else:
+        return 'uint64_t'
+
+
+def get_xil_io_suffix(data_width):
+    """Get the Xilinx I/O function suffix for a given data width.
+    
+    Args:
+        data_width: Register width in bits (8, 16, 32, or 64)
+    
+    Returns:
+        Suffix string ('8', '16', '32', or '64')
+    """
+    if data_width <= 8:
+        return '8'
+    elif data_width <= 16:
+        return '16'
+    elif data_width <= 32:
+        return '32'
+    else:
+        return '64'
+
+
 def generate_enhanced_c_header(rmap, base_header, base_address):
     """Generate enhanced C header with Xilinx Zynq/MicroBlaze read/write functions.
     
@@ -448,15 +486,9 @@ def generate_enhanced_c_header(rmap, base_header, base_address):
     cfg = corsair_config.globcfg
     data_width = cfg.get('data_width', 32)
     
-    # Determine the C type for register width
-    if data_width <= 8:
-        reg_type = 'uint8_t'
-    elif data_width <= 16:
-        reg_type = 'uint16_t'
-    elif data_width <= 32:
-        reg_type = 'uint32_t'
-    else:
-        reg_type = 'uint64_t'
+    # Determine the C type and I/O suffix for register width
+    reg_type = get_reg_type_for_width(data_width)
+    io_suffix = get_xil_io_suffix(data_width)
     
     # Start building the enhanced header
     enhanced_parts = []
@@ -471,59 +503,60 @@ def generate_enhanced_c_header(rmap, base_header, base_address):
  * This section provides hardware abstraction for Xilinx Zynq (bare metal) and
  * MicroBlaze platforms. The macros automatically select the appropriate I/O
  * functions based on the detected platform.
+ * Data width: {data_width} bits ({reg_type})
  * ============================================================================
  */
 
 #if defined(__MICROBLAZE__)
-    /* MicroBlaze platform - uses Xil_In32/Xil_Out32 from xil_io.h */
+    /* MicroBlaze platform - uses Xil_In{io_suffix}/Xil_Out{io_suffix} from xil_io.h */
     #include "xil_io.h"
     
     /**
-     * @brief Write a 32-bit value to a memory-mapped register (MicroBlaze)
+     * @brief Write a value to a memory-mapped register (MicroBlaze)
      * @param addr Register address
-     * @param val Value to write
+     * @param val Value to write ({reg_type})
      */
-    #define CSR_REG_WRITE(addr, val)  Xil_Out32((addr), (val))
+    #define CSR_REG_WRITE(addr, val)  Xil_Out{io_suffix}((addr), (val))
     
     /**
-     * @brief Read a 32-bit value from a memory-mapped register (MicroBlaze)
+     * @brief Read a value from a memory-mapped register (MicroBlaze)
      * @param addr Register address
-     * @return Value read from the register
+     * @return Value read from the register ({reg_type})
      */
-    #define CSR_REG_READ(addr)        Xil_In32((addr))
+    #define CSR_REG_READ(addr)        Xil_In{io_suffix}((addr))
     
 #elif defined(__aarch64__) || defined(__arm__) || defined(ARMR5) || defined(__ARM_ARCH)
-    /* Zynq/Zynq UltraScale+ ARM platform - uses Xil_In32/Xil_Out32 from xil_io.h */
+    /* Zynq/Zynq UltraScale+ ARM platform - uses Xil_In{io_suffix}/Xil_Out{io_suffix} from xil_io.h */
     #include "xil_io.h"
     
     /**
-     * @brief Write a 32-bit value to a memory-mapped register (Zynq ARM)
+     * @brief Write a value to a memory-mapped register (Zynq ARM)
      * @param addr Register address
-     * @param val Value to write
+     * @param val Value to write ({reg_type})
      */
-    #define CSR_REG_WRITE(addr, val)  Xil_Out32((addr), (val))
+    #define CSR_REG_WRITE(addr, val)  Xil_Out{io_suffix}((addr), (val))
     
     /**
-     * @brief Read a 32-bit value from a memory-mapped register (Zynq ARM)
+     * @brief Read a value from a memory-mapped register (Zynq ARM)
      * @param addr Register address
-     * @return Value read from the register
+     * @return Value read from the register ({reg_type})
      */
-    #define CSR_REG_READ(addr)        Xil_In32((addr))
+    #define CSR_REG_READ(addr)        Xil_In{io_suffix}((addr))
     
 #else
     /* Generic platform - uses volatile pointer access */
     /**
-     * @brief Write a 32-bit value to a memory-mapped register (generic)
+     * @brief Write a value to a memory-mapped register (generic)
      * @param addr Register address
-     * @param val Value to write
+     * @param val Value to write ({reg_type})
      * @note Uses volatile pointer access for memory-mapped I/O
      */
     #define CSR_REG_WRITE(addr, val)  (*((volatile {reg_type}*)(addr)) = (val))
     
     /**
-     * @brief Read a 32-bit value from a memory-mapped register (generic)
+     * @brief Read a value from a memory-mapped register (generic)
      * @param addr Register address
-     * @return Value read from the register
+     * @return Value read from the register ({reg_type})
      * @note Uses volatile pointer access for memory-mapped I/O
      */
     #define CSR_REG_READ(addr)        (*((volatile {reg_type}*)(addr)))
@@ -622,7 +655,7 @@ static inline void csr_{reg_name_lower}_write({reg_type} val) {{
             bf_access = bf.access.lower()
             
             # Generate field read function (for readable fields)
-            if 'r' in bf_access or bf_access in ['ro', 'rw', 'rolh']:
+            if 'r' in bf_access:
                 bitfield_funcs += f'''/**
  * @brief Read the {bf_name} field from {reg_name} register
  * @return Value of the {bf_name} field
@@ -636,10 +669,25 @@ static inline {reg_type} csr_{reg_name_lower}_{bf_name_lower}_get(void) {{
 '''
             
             # Generate field write function (for writable fields)
-            if 'w' in bf_access or bf_access in ['rw', 'wo', 'wosc', 'rw1c']:
-                bitfield_funcs += f'''/**
+            if 'w' in bf_access:
+                # Check if write-only (wo, wosc) - don't do read-modify-write
+                if bf_access in ['wo', 'wosc']:
+                    bitfield_funcs += f'''/**
  * @brief Write the {bf_name} field in {reg_name} register
- * @param val Value to write to the field
+ * @param val Value to write to the field (must fit within {bf_width} bits)
+ * @details {bf_desc}
+ * @note Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width}
+ * @note Write-only field - direct write without read-modify-write
+ */
+static inline void csr_{reg_name_lower}_{bf_name_lower}_set({reg_type} val) {{
+    csr_{reg_name_lower}_write((val << CSR_{reg_name}_{bf_name}_LSB) & CSR_{reg_name}_{bf_name}_MSK);
+}}
+
+'''
+                else:
+                    bitfield_funcs += f'''/**
+ * @brief Write the {bf_name} field in {reg_name} register
+ * @param val Value to write to the field (must fit within {bf_width} bits)
  * @details {bf_desc}
  * @note Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width}
  * @warning This function performs a read-modify-write operation
@@ -674,20 +722,21 @@ typedef struct __attribute__((packed)) {
     
     # Sort registers by address for proper struct layout
     sorted_regs = sorted(rmap, key=lambda r: r.address)
-    prev_addr = 0
+    # Start from the first register's address, not from 0
+    prev_addr = sorted_regs[0].address if sorted_regs else 0
     
     for reg in sorted_regs:
         reg_name = reg.name.lower()
         reg_desc = getattr(reg, 'description', f'{reg.name} register') or f'{reg.name} register'
         reg_addr = reg.address
         
-        # Add padding if there's a gap
+        # Add padding if there's a gap between registers
         if reg_addr > prev_addr:
             gap = reg_addr - prev_addr
             if gap > 0:
-                struct_access += f'    uint8_t _reserved_{prev_addr:#x}[{gap}];  /**< Reserved/padding */\\n'
+                struct_access += f'    uint8_t _reserved_{prev_addr:#x}[{gap}];  /**< Reserved/padding */\n'
         
-        struct_access += f'    {reg_type} {reg_name};  /**< @brief {reg_desc} (offset: {hex(reg_addr)}) */\\n'
+        struct_access += f'    {reg_type} {reg_name};  /**< @brief {reg_desc} (offset: {hex(reg_addr)}) */\n'
         prev_addr = reg_addr + (data_width // 8)
     
     struct_access += '''} csr_regmap_t;
@@ -710,10 +759,10 @@ static inline volatile csr_regmap_t* csr_get_regmap(void) {
     endif_pos = base_header.rfind('#endif')
     if endif_pos != -1:
         # Insert enhanced content before the final #endif
-        enhanced_header = base_header[:endif_pos] + '\\n'.join(enhanced_parts) + '\\n' + base_header[endif_pos:]
+        enhanced_header = base_header[:endif_pos] + '\n'.join(enhanced_parts) + '\n' + base_header[endif_pos:]
     else:
         # If no #endif found, just append
-        enhanced_header = base_header + '\\n'.join(enhanced_parts)
+        enhanced_header = base_header + '\n'.join(enhanced_parts)
     
     return enhanced_header
 
@@ -739,17 +788,11 @@ def generate_c_api_documentation(rmap):
     cfg = corsair_config.globcfg
     data_width = cfg.get('data_width', 32)
     
-    # Determine the C type for register width
-    if data_width <= 8:
-        reg_type = 'uint8_t'
-    elif data_width <= 16:
-        reg_type = 'uint16_t'
-    elif data_width <= 32:
-        reg_type = 'uint32_t'
-    else:
-        reg_type = 'uint64_t'
+    # Use helper function to determine the C type for register width
+    reg_type = get_reg_type_for_width(data_width)
+    io_suffix = get_xil_io_suffix(data_width)
     
-    docs = '''
+    docs = f'''
 
 ---
 
@@ -759,13 +802,13 @@ The generated C header (`regs.h`) provides a complete software API for accessing
 
 ### Platform Support
 
-The header automatically detects the target platform and uses appropriate I/O functions:
+The header automatically detects the target platform and uses appropriate I/O functions (data width: {data_width} bits):
 
 | Platform | Detection | I/O Functions |
 |----------|-----------|---------------|
-| **MicroBlaze** | `__MICROBLAZE__` defined | `Xil_In32()` / `Xil_Out32()` |
-| **Zynq ARM (32-bit)** | `__arm__` or `ARMR5` defined | `Xil_In32()` / `Xil_Out32()` |
-| **Zynq UltraScale+ ARM (64-bit)** | `__aarch64__` defined | `Xil_In32()` / `Xil_Out32()` |
+| **MicroBlaze** | `__MICROBLAZE__` defined | `Xil_In{io_suffix}()` / `Xil_Out{io_suffix}()` |
+| **Zynq ARM (32-bit)** | `__arm__` or `ARMR5` defined | `Xil_In{io_suffix}()` / `Xil_Out{io_suffix}()` |
+| **Zynq UltraScale+ ARM (64-bit)** | `__aarch64__` defined | `Xil_In{io_suffix}()` / `Xil_Out{io_suffix}()` |
 | **Generic** | None of the above | Volatile pointer access |
 
 ### Base Address Configuration
@@ -805,9 +848,9 @@ Each register has dedicated read and write functions:
         # Check if register has any writable fields
         has_writable = any('w' in bf.access.lower() for bf in reg.bitfields)
         
-        docs += f'| `csr_{reg_name_lower}_read()` | Read {reg_name} register (offset {hex(reg_addr)}) |\\n'
+        docs += f'| `csr_{reg_name_lower}_read()` | Read {reg_name} register (offset {hex(reg_addr)}) |\n'
         if has_writable:
-            docs += f'| `csr_{reg_name_lower}_write(val)` | Write to {reg_name} register |\\n'
+            docs += f'| `csr_{reg_name_lower}_write(val)` | Write to {reg_name} register |\n'
     
     # Document bitfield functions
     docs += '''
@@ -840,13 +883,14 @@ Each bitfield has dedicated getter and setter functions:
             
             bit_range = f'[{bf_lsb + bf_width - 1}:{bf_lsb}]' if bf_width > 1 else f'[{bf_lsb}]'
             
-            if 'r' in bf_access or bf_access in ['ro', 'rw', 'rolh']:
-                docs += f'| `csr_{reg_name_lower}_{bf_name_lower}_get()` | Get {bf_name} field | {bit_range} |\\n'
+            # Simplified access checks
+            if 'r' in bf_access:
+                docs += f'| `csr_{reg_name_lower}_{bf_name_lower}_get()` | Get {bf_name} field | {bit_range} |\n'
             
-            if 'w' in bf_access or bf_access in ['rw', 'wo', 'wosc', 'rw1c']:
-                docs += f'| `csr_{reg_name_lower}_{bf_name_lower}_set(val)` | Set {bf_name} field | {bit_range} |\\n'
+            if 'w' in bf_access:
+                docs += f'| `csr_{reg_name_lower}_{bf_name_lower}_set(val)` | Set {bf_name} field | {bit_range} |\n'
         
-        docs += '\\n'
+        docs += '\n'
     
     # Document the register map structure
     docs += '''### Register Map Structure
@@ -857,7 +901,7 @@ The header provides a packed structure for direct memory-mapped access:
 // Get pointer to register map
 volatile csr_regmap_t* regs = csr_get_regmap();
 
-// Access registers directly
+// Access registers directly (register names depend on your register map)
 regs->ctrl = 0x01;
 uint32_t status = regs->stat;
 ```
@@ -873,7 +917,7 @@ uint32_t status = regs->stat;
         reg_name = reg.name.lower()
         reg_desc = getattr(reg, 'description', f'{reg.name} register') or f'{reg.name} register'
         reg_addr = reg.address
-        docs += f'| `{reg_name}` | `{reg_type}` | `{hex(reg_addr)}` | {reg_desc} |\\n'
+        docs += f'| `{reg_name}` | `{reg_type}` | `{hex(reg_addr)}` | {reg_desc} |\n'
     
     # Add usage examples
     docs += '''

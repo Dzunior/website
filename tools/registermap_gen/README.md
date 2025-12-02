@@ -117,16 +117,18 @@ The tool uses the same format as [examples/regmap_json/regs.json](https://github
 #define CSR_BASE_ADDR  0x43C00000UL
 #include "regs.h"
 
+// Note: Function names depend on your register map configuration.
+// This example assumes a CTRL register with an ENABLE field exists.
 void example(void) {
-    // Read/write entire register
+    // Read/write entire register (replace 'ctrl' with your register name)
     uint32_t ctrl = csr_ctrl_read();
     csr_ctrl_write(0x01);
     
-    // Read/write specific bitfield
+    // Read/write specific bitfield (replace 'ctrl_enable' with your field)
     uint32_t enable = csr_ctrl_enable_get();
     csr_ctrl_enable_set(1);
     
-    // Direct struct access
+    // Direct struct access (member names match register names in lowercase)
     volatile csr_regmap_t* regs = csr_get_regmap();
     regs->ctrl = 0x01;
 }

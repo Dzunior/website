@@ -508,17 +508,17 @@ def generate_enhanced_c_header(rmap, base_header, base_address):
  */
 
 #if defined(__MICROBLAZE__) || defined(__aarch64__) || defined(__arm__) || defined(ARMR5) || defined(__ARM_ARCH)
-    /* Xilinx platform (MicroBlaze/Zynq/Zynq UltraScale+) - uses Xil_In{io_suffix}/Xil_Out{io_suffix} from xil_io.h */
+    /* Xilinx platform (MicroBlaze/Zynq/Zynq UltraScale+) - uses Xil_In{io_suffix}/Xil_Out{io_suffix} from xil_io.h. */
     #include "xil_io.h"
     
-    /* Write a value to a memory-mapped register */
+    /* Write a value to a memory-mapped register. */
     #define CSR_REG_WRITE(addr, val)  Xil_Out{io_suffix}((addr), (val))
     
-    /* Read a value from a memory-mapped register */
+    /* Read a value from a memory-mapped register. */
     #define CSR_REG_READ(addr)        Xil_In{io_suffix}((addr))
     
 #else
-    /* Generic platform - uses volatile pointer access */
+    /* Generic platform - uses volatile pointer access. */
     #define CSR_REG_WRITE(addr, val)  (*((volatile {reg_type}*)(addr)) = (val))
     #define CSR_REG_READ(addr)        (*((volatile {reg_type}*)(addr)))
     
@@ -604,7 +604,7 @@ static inline void csr_{reg_name_lower}_write({reg_type} val) {{
             
             # Generate field read function (for readable fields)
             if 'r' in bf_access:
-                bitfield_funcs += f'''/* Read the {bf_name} field from {reg_name} register. {bf_desc}. Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width} */
+                bitfield_funcs += f'''/* Read the {bf_name} field from {reg_name} register. {bf_desc}. Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width}. */
 static inline {reg_type} csr_{reg_name_lower}_{bf_name_lower}_get(void) {{
     return (csr_{reg_name_lower}_read() & CSR_{reg_name}_{bf_name}_MSK) >> CSR_{reg_name}_{bf_name}_LSB;
 }}
@@ -615,7 +615,7 @@ static inline {reg_type} csr_{reg_name_lower}_{bf_name_lower}_get(void) {{
             if 'w' in bf_access:
                 # Check if write-only (wo, wosc) - don't do read-modify-write
                 if bf_access in ['wo', 'wosc']:
-                    bitfield_funcs += f'''/* Write the {bf_name} field in {reg_name} register. {bf_desc}. Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width}. Write-only field. */
+                    bitfield_funcs += f'''/* Write the {bf_name} field in {reg_name} register. {bf_desc}. Bits [{bf_lsb + bf_width - 1}:{bf_lsb}], Width: {bf_width}. Write-only. */
 static inline void csr_{reg_name_lower}_{bf_name_lower}_set({reg_type} val) {{
     csr_{reg_name_lower}_write((val << CSR_{reg_name}_{bf_name}_LSB) & CSR_{reg_name}_{bf_name}_MSK);
 }}
@@ -662,14 +662,14 @@ typedef struct __attribute__((packed)) {
         if reg_addr > prev_addr:
             gap = reg_addr - prev_addr
             if gap > 0:
-                struct_access += f'    uint8_t _reserved_{prev_addr:#x}[{gap}];  /* Reserved/padding */\\n'
+                struct_access += f'    uint8_t _reserved_{prev_addr:#x}[{gap}];  /* Reserved/padding. */\\n'
         
-        struct_access += f'    {reg_type} {reg_name};  /* {reg_desc} (offset: {hex(reg_addr)}) */\\n'
+        struct_access += f'    {reg_type} {reg_name};  /* {reg_desc}. Offset: {hex(reg_addr)} */\\n'
         prev_addr = reg_addr + (data_width // 8)
     
     struct_access += '''} csr_regmap_t;
 
-/* Get pointer to the register map structure */
+/* Get pointer to the register map structure. */
 static inline volatile csr_regmap_t* csr_get_regmap(void) {
     return (volatile csr_regmap_t*)CSR_BASE_ADDR;
 }

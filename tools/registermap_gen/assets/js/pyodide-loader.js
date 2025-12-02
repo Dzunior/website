@@ -734,9 +734,9 @@ typedef struct __attribute__((packed)) {
         if reg_addr > prev_addr:
             gap = reg_addr - prev_addr
             if gap > 0:
-                struct_access += f'    uint8_t _reserved_{prev_addr:#x}[{gap}];  /**< Reserved/padding */\n'
+                struct_access += f'    uint8_t _reserved_{prev_addr:#x}[{gap}];  /**< Reserved/padding */\\n'
         
-        struct_access += f'    {reg_type} {reg_name};  /**< @brief {reg_desc} (offset: {hex(reg_addr)}) */\n'
+        struct_access += f'    {reg_type} {reg_name};  /**< @brief {reg_desc} (offset: {hex(reg_addr)}) */\\n'
         prev_addr = reg_addr + (data_width // 8)
     
     struct_access += '''} csr_regmap_t;

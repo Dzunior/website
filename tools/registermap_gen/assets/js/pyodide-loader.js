@@ -798,7 +798,7 @@ def generate_c_api_documentation(rmap):
 
 ## C Software API Reference
 
-The generated C header (`regs.h`) provides a complete software API for accessing the register map from Xilinx Zynq (bare metal) and MicroBlaze platforms.
+The generated C header (\`regs.h\`) provides a complete software API for accessing the register map from Xilinx Zynq (bare metal) and MicroBlaze platforms.
 
 ### Platform Support
 
@@ -806,26 +806,26 @@ The header automatically detects the target platform and uses appropriate I/O fu
 
 | Platform | Detection | I/O Functions |
 |----------|-----------|---------------|
-| **MicroBlaze** | `__MICROBLAZE__` defined | `Xil_In{io_suffix}()` / `Xil_Out{io_suffix}()` |
-| **Zynq ARM (32-bit)** | `__arm__` or `ARMR5` defined | `Xil_In{io_suffix}()` / `Xil_Out{io_suffix}()` |
-| **Zynq UltraScale+ ARM (64-bit)** | `__aarch64__` defined | `Xil_In{io_suffix}()` / `Xil_Out{io_suffix}()` |
+| **MicroBlaze** | \`__MICROBLAZE__\` defined | \`Xil_In{io_suffix}()\` / \`Xil_Out{io_suffix}()\` |
+| **Zynq ARM (32-bit)** | \`__arm__\` or \`ARMR5\` defined | \`Xil_In{io_suffix}()\` / \`Xil_Out{io_suffix}()\` |
+| **Zynq UltraScale+ ARM (64-bit)** | \`__aarch64__\` defined | \`Xil_In{io_suffix}()\` / \`Xil_Out{io_suffix}()\` |
 | **Generic** | None of the above | Volatile pointer access |
 
 ### Base Address Configuration
 
 The base address can be configured before including the header:
 
-```c
+\`\`\`c
 #define CSR_BASE_ADDR  0x43C00000UL  // Custom base address
 #include "regs.h"
-```
+\`\`\`
 
 ### I/O Macros
 
 | Macro | Description |
 |-------|-------------|
-| `CSR_REG_WRITE(addr, val)` | Write a value to a register address |
-| `CSR_REG_READ(addr)` | Read a value from a register address |
+| \`CSR_REG_WRITE(addr, val)\` | Write a value to a register address |
+| \`CSR_REG_READ(addr)\` | Read a value from a register address |
 
 '''
     
@@ -848,9 +848,9 @@ Each register has dedicated read and write functions:
         # Check if register has any writable fields
         has_writable = any('w' in bf.access.lower() for bf in reg.bitfields)
         
-        docs += f'| `csr_{reg_name_lower}_read()` | Read {reg_name} register (offset {hex(reg_addr)}) |\n'
+        docs += f'| \`csr_{reg_name_lower}_read()\` | Read {reg_name} register (offset {hex(reg_addr)}) |\\n'
         if has_writable:
-            docs += f'| `csr_{reg_name_lower}_write(val)` | Write to {reg_name} register |\n'
+            docs += f'| \`csr_{reg_name_lower}_write(val)\` | Write to {reg_name} register |\\n'
     
     # Document bitfield functions
     docs += '''
@@ -885,10 +885,10 @@ Each bitfield has dedicated getter and setter functions:
             
             # Simplified access checks
             if 'r' in bf_access:
-                docs += f'| `csr_{reg_name_lower}_{bf_name_lower}_get()` | Get {bf_name} field | {bit_range} |\n'
+                docs += f'| \`csr_{reg_name_lower}_{bf_name_lower}_get()\` | Get {bf_name} field | {bit_range} |\\n'
             
             if 'w' in bf_access:
-                docs += f'| `csr_{reg_name_lower}_{bf_name_lower}_set(val)` | Set {bf_name} field | {bit_range} |\n'
+                docs += f'| \`csr_{reg_name_lower}_{bf_name_lower}_set(val)\` | Set {bf_name} field | {bit_range} |\\n'
         
         docs += '\n'
     
@@ -897,14 +897,14 @@ Each bitfield has dedicated getter and setter functions:
 
 The header provides a packed structure for direct memory-mapped access:
 
-```c
+\`\`\`c
 // Get pointer to register map
 volatile csr_regmap_t* regs = csr_get_regmap();
 
 // Access registers directly (register names depend on your register map)
 regs->ctrl = 0x01;
 uint32_t status = regs->stat;
-```
+\`\`\`
 
 #### Structure Members
 
@@ -917,7 +917,7 @@ uint32_t status = regs->stat;
         reg_name = reg.name.lower()
         reg_desc = getattr(reg, 'description', f'{reg.name} register') or f'{reg.name} register'
         reg_addr = reg.address
-        docs += f'| `{reg_name}` | `{reg_type}` | `{hex(reg_addr)}` | {reg_desc} |\n'
+        docs += f'| \`{reg_name}\` | \`{reg_type}\` | \`{hex(reg_addr)}\` | {reg_desc} |\\n'
     
     # Add usage examples
     docs += '''
@@ -925,7 +925,7 @@ uint32_t status = regs->stat;
 
 #### Basic Register Access
 
-```c
+\`\`\`c
 #include "regs.h"
 
 void example_basic_access(void) {
@@ -935,11 +935,11 @@ void example_basic_access(void) {
     // Write a register
     csr_ctrl_write(0x00000001);
 }
-```
+\`\`\`
 
 #### Bitfield Access
 
-```c
+\`\`\`c
 #include "regs.h"
 
 void example_bitfield_access(void) {
@@ -949,11 +949,11 @@ void example_bitfield_access(void) {
     // Set a specific field (read-modify-write)
     csr_ctrl_enable_set(1);
 }
-```
+\`\`\`
 
 #### Structure-Based Access
 
-```c
+\`\`\`c
 #include "regs.h"
 
 void example_struct_access(void) {
@@ -963,11 +963,11 @@ void example_struct_access(void) {
     regs->ctrl = 0x01;
     uint32_t status = regs->stat;
 }
-```
+\`\`\`
 
 #### Custom Base Address
 
-```c
+\`\`\`c
 // Override base address before including header
 #define CSR_BASE_ADDR  0x80000000UL
 #include "regs.h"
@@ -976,7 +976,7 @@ void example_custom_base(void) {
     // All functions now use the custom base address
     csr_ctrl_write(0x01);
 }
-```
+\`\`\`
 
 '''
     

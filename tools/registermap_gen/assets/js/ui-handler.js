@@ -147,6 +147,25 @@ class UIHandler {
         if (infoEl) infoEl.style.display = 'block';
         showSnackbar('Selected regs.json: ' + file.name);
         this.updateGenerateButton();
+        
+        // Read and display JSON preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+            try {
+                // Try to parse and format the JSON for better display
+                const jsonObj = JSON.parse(content);
+                const formattedJson = JSON.stringify(jsonObj, null, 2);
+                updateJsonPreview(formattedJson);
+            } catch (err) {
+                // If parsing fails, just display the raw content
+                updateJsonPreview(content);
+            }
+        };
+        reader.onerror = () => {
+            updateJsonPreview('Error reading file');
+        };
+        reader.readAsText(file);
     }
 
     addRegister() {

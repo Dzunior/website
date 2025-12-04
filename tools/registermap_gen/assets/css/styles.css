@@ -121,7 +121,6 @@ body {
 .json-preview-area {
     background-color: #2d2d2d;
     border-radius: 8px;
-    overflow: hidden;
     max-height: 400px;
     overflow-y: auto;
 }

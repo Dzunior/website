@@ -156,14 +156,20 @@ class UIHandler {
                 // Try to parse and format the JSON for better display
                 const jsonObj = JSON.parse(content);
                 const formattedJson = JSON.stringify(jsonObj, null, 2);
-                updateJsonPreview(formattedJson);
+                if (typeof updateJsonPreview === 'function') {
+                    updateJsonPreview(formattedJson);
+                }
             } catch (err) {
                 // If parsing fails, just display the raw content
-                updateJsonPreview(content);
+                if (typeof updateJsonPreview === 'function') {
+                    updateJsonPreview(content);
+                }
             }
         };
         reader.onerror = () => {
-            updateJsonPreview('Error reading file');
+            if (typeof updateJsonPreview === 'function') {
+                updateJsonPreview('Error reading file');
+            }
         };
         reader.readAsText(file);
     }

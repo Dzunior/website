@@ -88,11 +88,6 @@ class UIHandler {
         document.getElementById('download-all-btn').addEventListener('click', () => {
             this.downloadAllFiles();
         });
-
-        // Theme toggle
-        document.getElementById('theme-toggle').addEventListener('click', () => {
-            this.toggleTheme();
-        });
     }
 
     toggleInputMethod(method) {
@@ -539,16 +534,6 @@ class UIHandler {
         }
     }
 
-    toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        const icon = document.getElementById('theme-toggle');
-        icon.textContent = newTheme === 'dark' ? 'brightness_7' : 'brightness_4';
-    }
-
     async downloadAllFiles() {
         if (!window.generatedOutputs) return;
         
@@ -589,11 +574,5 @@ let uiHandler;
 
 document.addEventListener('DOMContentLoaded', () => {
     uiHandler = new UIHandler();
-    
-    // Load saved theme
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    document.getElementById('theme-toggle').textContent = 
-        savedTheme === 'dark' ? 'brightness_7' : 'brightness_4';
 });
 

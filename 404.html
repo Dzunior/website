@@ -14,17 +14,18 @@ permalink: /404.html
     <title>404 - Page Not Found | Mylium</title>
 
     <!-- Bootstrap Core CSS -->
-    <link rel="stylesheet" href="/css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
 
     <!-- Custom Fonts -->
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic,700,700italic,800,800italic|Merriweather:300,300italic,400,400italic,700,700italic,900,900italic&display=swap' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800&display=swap' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Merriweather:400,300,300italic,400italic,700,700italic,900,900italic&display=swap' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css" type="text/css">
 
     <!-- Plugin CSS -->
-    <link rel="stylesheet" href="/css/animate.min.css" type="text/css">
+    <link rel="stylesheet" href="css/animate.min.css" type="text/css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/css/main.css" type="text/css">
+    <link rel="stylesheet" href="css/main.css" type="text/css">
 
     <style>
         body {
@@ -51,6 +52,8 @@ permalink: /404.html
             background: linear-gradient(135deg, #00d4ff 0%, #0091ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            -moz-background-clip: text;
+            -moz-text-fill-color: transparent;
             background-clip: text;
         }
         .error-title {
@@ -113,10 +116,21 @@ permalink: /404.html
 </head>
 
 <body>
-    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top error-nav">
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top error-nav" role="navigation">
         <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse-404" aria-expanded="false" aria-controls="navbar-collapse-404">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
                 <a class="navbar-brand error-nav-brand" href="/">Mylium</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="navbar-collapse-404">
+                <!-- Nav links intentionally empty for 404 page -->
             </div>
         </div>
     </nav>

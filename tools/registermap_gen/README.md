@@ -1,6 +1,6 @@
 # Corsair Register Map Generator
 
-A browser-based tool for generating VHDL modules, C headers, and documentation from register map specifications using the latest [Corsair (MyliumFPGA/corsair_mod)](https://github.com/MyliumFPGA/corsair_mod) library.
+A browser-based tool for generating VHDL modules, C headers, and documentation from register map specifications using the Corsair library.
 
 ## Features
 
@@ -16,7 +16,7 @@ A browser-based tool for generating VHDL modules, C headers, and documentation f
 ## Technology Stack
 
 - **Pyodide v0.28.3**: Python runtime in WebAssembly
-- **Corsair (MyliumFPGA/corsair_mod)**: Register map generation library (latest version)
+- **Corsair**: Register map generation library (latest version)
 - **Material Design Components**: UI framework
 - **Jekyll**: Static site generation
 
@@ -74,7 +74,7 @@ A packed C structure (`csr_regmap_t`) for direct memory-mapped access:
 
 ### JSON Format Example
 
-The tool uses the same format as [examples/regmap_json/regs.json](https://github.com/MyliumFPGA/corsair_mod/blob/master/examples/regmap_json/regs.json):
+The tool uses standard Corsair JSON format:
 
 ```json
 {
@@ -127,5 +127,3 @@ void example(void) {
 ## Links
 
 - [Corsair Documentation](https://corsair.readthedocs.io)
-- [MyliumFPGA/corsair_mod Repository](https://github.com/MyliumFPGA/corsair_mod)
-- [Examples](https://github.com/MyliumFPGA/corsair_mod/tree/master/examples/regmap_json)

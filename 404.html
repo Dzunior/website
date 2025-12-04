@@ -53,7 +53,6 @@ permalink: /404.html
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-fill-color: transparent;
             text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
         }
         .error-title {
@@ -101,14 +100,25 @@ permalink: /404.html
             max-width: 50px;
             margin: 30px auto;
         }
+        .error-nav {
+            background-color: rgba(24, 30, 47, 0.98);
+            border-color: rgba(0, 212, 255, 0.2);
+            box-shadow: 0 2px 30px rgba(0, 212, 255, 0.15);
+        }
+        .error-nav-brand {
+            color: #e8eef5;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
     </style>
 </head>
 
 <body>
-    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top" style="background-color: rgba(24, 30, 47, 0.98); border-color: rgba(0, 212, 255, 0.2); box-shadow: 0 2px 30px rgba(0, 212, 255, 0.15);">
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top error-nav">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a class="navbar-brand" href="/" style="color: #e8eef5; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">Mylium</a>
+                <a class="navbar-brand error-nav-brand" href="/">Mylium</a>
             </div>
         </div>
     </nav>

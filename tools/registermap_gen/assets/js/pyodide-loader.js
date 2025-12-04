@@ -217,7 +217,7 @@ with zipfile.ZipFile('/tmp/corsair.zip', 'r') as zip_ref:
 extracted_items = os.listdir('/tmp/corsair_extracted')
 print(f"[Python] Extracted items: {extracted_items}")
 
-# Look for the corsair_mod directory (usually corsair_mod-master)
+# Look for the corsair directory (usually corsair-master or corsair_mod-master)
 corsair_root = None
 for item in extracted_items:
     item_path = os.path.join('/tmp/corsair_extracted', item)

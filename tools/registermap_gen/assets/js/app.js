@@ -129,6 +129,9 @@ const exampleConfigs = {
 };
 // Add button to load default example and auto-load it if no file is present
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize JSON preview
+    updateJsonPreview(null);
+    
     // Load example button setup
     const exampleBtn = document.createElement('button');
     exampleBtn.className = 'mdc-button mdc-button--outlined';
@@ -154,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function loadExample(exampleName) {
     if (exampleConfigs[exampleName]) {
         // Create a synthetic File-like Blob so the upload flow can treat examples the same as uploaded files
-        const jsonText = JSON.stringify(exampleConfigs[exampleName]);
+        const jsonText = JSON.stringify(exampleConfigs[exampleName], null, 2);
         const blob = new Blob([jsonText], { type: 'application/json' });
         // create a simple File if supported, otherwise attach the blob and a name
         let fileObj;
@@ -168,7 +171,24 @@ function loadExample(exampleName) {
         document.getElementById('file-name').textContent = `Example: ${exampleName}`;
         document.getElementById('file-info').style.display = 'block';
         uiHandler.updateGenerateButton();
+        updateJsonPreview(jsonText);
         showSnackbar('Example loaded');
+    }
+}
+
+// Update JSON preview
+function updateJsonPreview(jsonText) {
+    const previewCode = document.getElementById('json-preview-code');
+    if (previewCode) {
+        if (jsonText) {
+            previewCode.textContent = jsonText;
+            // Apply syntax highlighting if Prism is available
+            if (typeof Prism !== 'undefined') {
+                Prism.highlightElement(previewCode);
+            }
+        } else {
+            previewCode.textContent = 'No file loaded';
+        }
     }
 }
 
